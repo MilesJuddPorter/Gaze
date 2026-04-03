@@ -1,4 +1,5 @@
 # Gaze state — stays local, never committed
+**/.gaze/
 .gaze/
 
 # Dependencies

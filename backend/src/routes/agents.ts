@@ -23,11 +23,10 @@ export async function agentRoutes(app: FastifyInstance, opts: { gazeDir?: string
   // GET /api/status — routing gate for frontend (config panel vs forum)
   app.get("/api/status", async () => {
     const configPath = gazeDir ? path.join(gazeDir, "config.json") : null;
-    const dbPath = gazeDir ? path.join(gazeDir, "gaze.db") : null;
+    // Initialized = config exists (DB is always created on boot, so only config signals real init)
     const configExists = configPath ? fs.existsSync(configPath) : false;
-    const dbExists = dbPath ? fs.existsSync(dbPath) : false;
-    const partial = configExists !== dbExists;
-    const initialized = configExists && dbExists;
+    const initialized = configExists;
+    const partial = false; // partial detection not needed — config is the source of truth
     const agents = initialized ? getAllAgents() : [];
     return {
       initialized,

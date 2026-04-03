@@ -7,6 +7,8 @@ import {
   updateAgentStatus,
   updateAgentLastRead,
   postMessage,
+  logActivity,
+  getAgentActivity,
   type Agent,
   type Message,
 } from "./database.js";

@@ -3,6 +3,10 @@ import cors from "@fastify/cors";
 import staticPlugin from "@fastify/static";
 import path from "path";
 import fs from "fs";
+import { createRequire } from "module";
+
+const _require = createRequire(import.meta.url);
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 import {
   initDatabase,
   getAllAgents,
@@ -157,4 +161,17 @@ export async function startServer(gazeDir: string, port: number): Promise<void> 
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
+}
+
+// ─── CLI bootstrap (only when run directly, not when imported) ───────────────
+const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
+if (isMain || process.env.GAZE_DIRECT === "1") {
+  const gazeDir = process.env.GAZE_DIR || path.join(process.cwd(), ".gaze");
+  const port = parseInt(process.env.GAZE_PORT || "3333", 10);
+
+  fs.mkdirSync(gazeDir, { recursive: true });
+  startServer(gazeDir, port).catch((err) => {
+    console.error("Failed to start Gaze server:", err);
+    process.exit(1);
+  });
 }

@@ -93,6 +93,18 @@ function createTables(): void {
       emoji TEXT NOT NULL,
       UNIQUE(message_id, reactor_name, emoji)
     );
+
+    CREATE TABLE IF NOT EXISTS agent_activity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id INTEGER NOT NULL REFERENCES agents(id),
+      tool_name TEXT NOT NULL,
+      tool_input TEXT DEFAULT '{}',
+      result_summary TEXT DEFAULT '',
+      status TEXT DEFAULT 'ok',
+      action_type TEXT DEFAULT 'tool',
+      description TEXT DEFAULT '',
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -286,4 +298,55 @@ export function closeDatabase(): void {
     db.close();
     db = null;
   }
+}
+
+// ---- Agent Activity ----
+
+export interface ActivityEntry {
+  id: number;
+  agent_id: number;
+  tool_name: string;
+  tool_input: string;
+  result_summary: string;
+  status: string;
+  action_type: string;
+  description: string;
+  timestamp: string;
+}
+
+export function logActivity(entry: {
+  agent_id: number;
+  tool_name: string;
+  tool_input?: Record<string, unknown>;
+  result_summary?: string;
+  status?: "ok" | "error";
+  action_type?: string;
+  description?: string;
+}): void {
+  const d = getDb();
+  d.prepare(`
+    INSERT INTO agent_activity (agent_id, tool_name, tool_input, result_summary, status, action_type, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    entry.agent_id,
+    entry.tool_name,
+    JSON.stringify(entry.tool_input ?? {}),
+    entry.result_summary ?? "",
+    entry.status ?? "ok",
+    entry.action_type ?? "tool",
+    entry.description ?? ""
+  );
+  // Prune to last 20 per agent
+  d.prepare(`
+    DELETE FROM agent_activity WHERE agent_id = ? AND id NOT IN (
+      SELECT id FROM agent_activity WHERE agent_id = ? ORDER BY id DESC LIMIT 20
+    )
+  `).run(entry.agent_id, entry.agent_id);
+}
+
+export function getAgentActivity(agentId: number, limit = 20): ActivityEntry[] {
+  const d = getDb();
+  return d.prepare(`
+    SELECT * FROM agent_activity WHERE agent_id = ? ORDER BY id DESC LIMIT ?
+  `).all(agentId, limit) as ActivityEntry[];
 }
