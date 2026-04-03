@@ -7,6 +7,7 @@ import {
   createAgent,
   updateAgent,
   deleteAgent,
+  getAgentActivity,
 } from "../database.js";
 import {
   startAgent,
@@ -115,5 +116,14 @@ export async function agentRoutes(app: FastifyInstance, opts: { gazeDir?: string
     stopAgent(id);
     deleteAgent(id);
     return { ok: true };
+  });
+
+  // GET /api/agents/:id/activity — last N tool calls for agent activity panel
+  app.get<{ Params: { id: string }; Querystring: { limit?: string } }>("/api/agents/:id/activity", async (request, reply) => {
+    const id = parseInt(request.params.id);
+    const limit = parseInt(request.query.limit ?? "20");
+    const agent = getAgent(id);
+    if (!agent) return reply.code(404).send({ error: "Agent not found" });
+    return getAgentActivity(id, limit);
   });
 }

@@ -70,9 +70,29 @@ async function triageAgent(agent: Agent, recentMessages: Message[]): Promise<boo
       .trim()
       .toUpperCase();
 
-    return text.startsWith("YES");
+    const decision = text.startsWith("YES");
+    logActivity({
+      agent_id: agent.id,
+      tool_name: "triage",
+      tool_input: { model: DEFAULT_SETTINGS.triage_model, message_count: recentMessages.length },
+      result_summary: `${decision ? "YES" : "NO"} — ${text.slice(0, 80)}`,
+      status: "ok",
+      action_type: "thinking",
+      description: `triage (${DEFAULT_SETTINGS.triage_model}): ${decision ? "will respond" : "staying silent"}`,
+    });
+    console.log(`[${agent.name}] triage (${DEFAULT_SETTINGS.triage_model}): ${decision ? "respond" : "skip"}`);
+    return decision;
   } catch (err) {
     console.error(`[${agent.name}] Triage error:`, err);
+    logActivity({
+      agent_id: agent.id,
+      tool_name: "triage",
+      tool_input: { model: DEFAULT_SETTINGS.triage_model },
+      result_summary: String(err).slice(0, 80),
+      status: "error",
+      action_type: "thinking",
+      description: `triage error (${DEFAULT_SETTINGS.triage_model})`,
+    });
     return false;
   }
 }
@@ -133,19 +153,24 @@ async function runAgentTurn(agent: Agent): Promise<void> {
   updateAgentStatus(agent.id, "thinking", "Reading #forum...");
   broadcast("agent_status", { agentId: agent.id, status: "thinking", action: "Reading #forum..." });
 
+  // Emit tool_start for the triage read
+  const readDesc = `forum messages (last ${contextMessages.length})`;
+  broadcast("tool_start", { agent_id: agent.id, tool_name: "read_forum", tool_input: { count: contextMessages.length }, timestamp: new Date().toISOString() });
+  broadcast("agent_activity", { agent_id: agent.id, action_type: "reading", description: readDesc, timestamp: new Date().toISOString() });
+  logActivity({ agent_id: agent.id, tool_name: "read_forum", tool_input: { count: contextMessages.length }, action_type: "reading", description: readDesc });
+
   try {
     const contextPrompt = buildContext(agent, contextMessages, allAgents);
 
-    // Update status to typing
+    // Update status to acting
     updateAgentStatus(agent.id, "acting", "Composing response...");
-    broadcast("agent_status", {
-      agentId: agent.id,
-      status: "acting",
-      action: "Composing response...",
-    });
+    broadcast("agent_status", { agentId: agent.id, status: "acting", action: "Composing response..." });
     broadcast("acting", { agentId: agent.id, agentName: agent.name, typing: true });
+    broadcast("tool_start", { agent_id: agent.id, tool_name: "llm_generate", tool_input: { model: DEFAULT_SETTINGS.act_model }, timestamp: new Date().toISOString() });
+    broadcast("agent_activity", { agent_id: agent.id, action_type: "thinking", description: `composing reply (${DEFAULT_SETTINGS.act_model})`, timestamp: new Date().toISOString() });
 
     // Call Claude SDK with streaming
+    console.log(`[${agent.name}] act (${DEFAULT_SETTINGS.act_model}): composing reply`);
     const stream = await client.messages.stream({
       model: DEFAULT_SETTINGS.act_model,
       max_tokens: 1024,
@@ -166,10 +191,18 @@ async function runAgentTurn(agent: Agent): Promise<void> {
     if (text && text !== "SILENT" && !text.toUpperCase().startsWith("SILENT")) {
       const msg = postMessage(agent.name, text, agent.id);
       broadcast("message", msg);
+      broadcast("tool_end", { agent_id: agent.id, tool_name: "post_message", result_summary: text.slice(0, 80), status: "ok", timestamp: new Date().toISOString() });
+      broadcast("agent_activity", { agent_id: agent.id, action_type: "editing", description: `posted to #forum`, timestamp: new Date().toISOString() });
+      logActivity({ agent_id: agent.id, tool_name: "post_message", result_summary: text.slice(0, 80), status: "ok", action_type: "editing", description: "posted to #forum" });
+    } else {
+      broadcast("tool_end", { agent_id: agent.id, tool_name: "llm_generate", result_summary: "stayed silent", status: "ok", timestamp: new Date().toISOString() });
+      logActivity({ agent_id: agent.id, tool_name: "llm_generate", result_summary: "stayed silent", status: "ok", action_type: "thinking", description: "decided to stay silent" });
     }
   } catch (err) {
     console.error(`[${agent.name}] Turn error:`, err);
     broadcast("acting", { agentId: agent.id, agentName: agent.name, typing: false });
+    broadcast("tool_end", { agent_id: agent.id, tool_name: "llm_generate", result_summary: String(err), status: "error", timestamp: new Date().toISOString() });
+    logActivity({ agent_id: agent.id, tool_name: "llm_generate", result_summary: String(err).slice(0, 80), status: "error", action_type: "tool", description: "turn error" });
   } finally {
     updateAgentStatus(agent.id, "idle", null);
     broadcast("agent_status", { agentId: agent.id, status: "idle", action: null });

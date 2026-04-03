@@ -24,27 +24,43 @@ export default function Forum({ workspaceName }: Props) {
       .catch(console.error);
   }, []);
 
-  // SSE stream: server sends  data: {"type":"message"|"agent_status","data":{...}}
+  // SSE stream: server sends named events via /api/messages/stream
   useEffect(() => {
-    const es = new EventSource("/api/stream");
-    es.onmessage = (e) => {
-      try {
-        const envelope = JSON.parse(e.data);
-        const { type, data } = envelope;
-        if (type === "message") {
+    let es: EventSource;
+
+    const connect = () => {
+      es = new EventSource("/api/messages/stream");
+
+      // Named "message" event — new chat message posted
+      es.addEventListener("message", (e) => {
+        try {
+          const msg = JSON.parse(e.data);
           setMessages((prev) =>
-            prev.some((m) => m.id === data.id) ? prev : [...prev, data]
+            prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
           );
-        } else if (type === "agent_status") {
+        } catch { /* ignore */ }
+      });
+
+      // Named "agent_status" event — agent state changed
+      es.addEventListener("agent_status", (e) => {
+        try {
+          const { agentId, status, action } = JSON.parse(e.data);
           setAgents((prev) =>
-            prev.map((a) => (a.id === data.id ? { ...a, ...data } : a))
+            prev.map((a) =>
+              a.id === agentId ? { ...a, status, current_action: action } : a
+            )
           );
-        }
-      } catch {
-        /* heartbeat comments and pings — ignore */
-      }
+        } catch { /* ignore */ }
+      });
+
+      es.onerror = () => {
+        es.close();
+        setTimeout(connect, 3000);
+      };
     };
-    return () => es.close();
+
+    connect();
+    return () => es?.close();
   }, []);
 
   async function handleSend(content: string) {
