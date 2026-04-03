@@ -1,0 +1,28 @@
+# Gaze state — stays local, never committed
+.gaze/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+backend/dist/
+frontend/dist/
+
+# Environment
+.env
+.env.local
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
