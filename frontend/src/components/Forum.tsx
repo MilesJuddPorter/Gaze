@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Message, Agent } from "../types";
 import ForumFeed from "./ForumFeed";
-import AgentRoster from "./AgentRoster";
+import AgentActivityBoard from "./AgentActivityBoard";
 import InputBar from "./InputBar";
 
 interface Props {
@@ -96,7 +96,7 @@ export default function Forum({ workspaceName }: Props) {
           <ForumFeed messages={messages} agents={agents} />
           <InputBar onSend={handleSend} />
         </div>
-        <AgentRoster agents={agents} onStart={handleStart} onStop={handleStop} />
+        <AgentActivityBoard agents={agents} onStart={handleStart} onStop={handleStop} />
       </div>
     </div>
   );

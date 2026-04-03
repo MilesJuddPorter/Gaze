@@ -81,7 +81,7 @@ export default function AgentActivityCard({ agent, activityLines, currentTool, o
 
       {/* Progress bar / status */}
       <div style={S.footer}>
-        <ProgressBar active={agent.status === "thinking"} label="thinking..." />
+        <ProgressBar isActive={agent.status === "thinking"} label="thinking..." />
         {agent.status === "acting" && agent.current_action && (
           <div style={S.actingLine}>
             <span style={S.actingLabel}>[ACT·]</span>&nbsp;
@@ -90,7 +90,9 @@ export default function AgentActivityCard({ agent, activityLines, currentTool, o
         )}
         {(agent.status === "idle" || agent.status === "sleeping") && (
           <div style={S.idleLine}>
-            {agent.status === "idle" ? "[IDLE] _" : "[ZZZ·]"}
+            {agent.status === "idle"
+              ? <>[IDLE] <span className="cursor" /></>
+              : "[ZZZ·]"}
           </div>
         )}
       </div>

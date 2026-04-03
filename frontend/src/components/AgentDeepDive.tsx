@@ -1,125 +1,134 @@
 import React, { useEffect, useState } from "react";
 import type { Agent } from "../types";
 
-interface ToolRecord {
+interface ActivityEntry {
+  id: number;
   tool_name: string;
-  tool_input: Record<string, unknown>;
+  tool_input: string;
   result_summary: string;
-  status: "ok" | "error";
+  status: string;
+  action_type: string;
+  description: string;
   timestamp: string;
 }
 
 interface Props {
   agent: Agent;
   onClose: () => void;
-  onDm: () => void;
 }
 
-export default function AgentDeepDive({ agent, onClose, onDm }: Props) {
-  const [toolLog, setToolLog] = useState<ToolRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+function formatTime(ts: string): string {
+  const d = new Date(ts.endsWith("Z") ? ts : ts + "Z");
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+}
+
+export default function AgentDeepDive({ agent, onClose }: Props) {
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const nameColor = agent.avatar_color ?? "#33ff00";
+  const nameGlow = `0 0 6px ${nameColor}80`;
 
   useEffect(() => {
-    // Fetch recent tool activity for this agent
-    const fetchActivity = async () => {
-      try {
-        const res = await fetch(`/api/agents/${agent.id}/activity?limit=10`);
-        if (res.ok) {
-          const data = await res.json();
-          setToolLog(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch agent activity:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActivity();
+    fetch(`/api/agents/${agent.id}/activity?limit=20`)
+      .then((r) => r.json())
+      .then((data) => setActivity(Array.isArray(data) ? data : []))
+      .catch(() => setActivity([]));
   }, [agent.id]);
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 p-4 flex items-center justify-center"
-      onClick={onClose}
-    >
-      <div
-        className="bg-gray-900 border border-gray-600 rounded p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          animation: "slideInRight 200ms ease forwards",
-          borderColor: agent.avatar_color + "60",
-        }}
-      >
+    <div style={S.overlay}>
+      <div style={S.panel}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-bold" style={{ color: agent.avatar_color }}>
+        <div style={{ ...S.header, borderBottomColor: nameColor }}>
+          <div style={S.headerLeft}>
+            <span style={{ ...S.agentLabel, color: nameColor, textShadow: nameGlow }}>
               [{agent.name.toUpperCase()}]
             </span>
-            <span className="text-sm text-gray-400">{agent.role}</span>
+            <span style={S.role}>// {agent.role}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-200 font-bold"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Current Action */}
-        <div className="mb-6">
-          <div className="text-xs font-mono text-gray-500 mb-2 uppercase">Current Action</div>
-          <div className="text-sm font-mono text-green-400">
-            {agent.current_action || "—"}
+          <div style={S.headerRight}>
+            <span style={S.statusStr}>{agent.status.toUpperCase()}</span>
+            <button style={S.closeBtn} onClick={onClose}>[ CLOSE ]</button>
           </div>
         </div>
 
-        {/* Tool Call Log */}
-        <div className="mb-6">
-          <div className="text-xs font-mono text-gray-500 mb-3 uppercase">Tool Call Log</div>
-          {loading ? (
-            <div className="text-xs text-gray-600">loading...</div>
-          ) : toolLog.length === 0 ? (
-            <div className="text-xs text-gray-600">no tools called yet</div>
-          ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {toolLog.map((call, idx) => (
-                <div key={idx} className="text-xs font-mono">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">
-                      {new Date(call.timestamp).toLocaleTimeString()}
-                    </span>
-                    <span className="text-amber-400">{call.tool_name}</span>
-                    <span className={call.status === "ok" ? "text-green-400" : "text-red-400"}>
-                      [{call.status.toUpperCase()}]
-                    </span>
-                  </div>
-                  <div className="text-gray-600 ml-4 text-xs">
-                    {call.result_summary || "(no summary)"}
-                  </div>
+        {/* Current action */}
+        {agent.current_action && (
+          <div style={S.section}>
+            <div style={S.sectionTitle}>CURRENT ACTION</div>
+            <div style={S.divider} />
+            <div style={S.currentAction}>&gt; {agent.current_action}</div>
+          </div>
+        )}
+
+        {/* Tool call log */}
+        <div style={S.section}>
+          <div style={S.sectionTitle}>TOOL LOG (last {activity.length})</div>
+          <div style={S.divider} />
+          <div style={S.logList}>
+            {activity.length === 0 && (
+              <div style={S.emptyLog}>// no activity recorded yet</div>
+            )}
+            {activity.map((entry) => {
+              const statusColor = entry.status === "error" ? "#ff3333" : "#33ff00";
+              return (
+                <div key={entry.id} style={S.logRow}>
+                  <span style={S.logTime}>{formatTime(entry.timestamp)}</span>
+                  <span style={S.logTool}>{entry.tool_name.padEnd(18)}</span>
+                  <span style={S.logDesc}>{entry.description.slice(0, 28).padEnd(28)}</span>
+                  <span style={{ ...S.logStatus, color: statusColor }}>
+                    {entry.status === "error" ? "[ERR]" : "[OK]"}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 justify-end pt-4 border-t border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-3 py-1 text-xs font-mono border border-gray-600 text-gray-400 hover:text-gray-200 rounded"
-          >
-            CLOSE
-          </button>
-          <button
-            onClick={onDm}
-            className="px-3 py-1 text-xs font-mono border border-green-600 text-green-400 hover:text-green-300 rounded"
-          >
-            DM {agent.name.toUpperCase()}
-          </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+const S: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: "absolute" as const,
+    inset: 0,
+    background: "#0a0a0a",
+    zIndex: 50,
+    display: "flex", flexDirection: "column" as const,
+    animation: "slideIn 0.2s ease",
+  },
+  panel: {
+    flex: 1, display: "flex", flexDirection: "column" as const,
+    overflow: "hidden",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  header: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "12px 14px",
+    borderBottom: "2px solid",
+    flexShrink: 0,
+  },
+  headerLeft: { display: "flex", flexDirection: "column" as const, gap: "2px" },
+  agentLabel: { fontSize: "14px", fontWeight: 700, letterSpacing: "0.1em" },
+  role: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
+  headerRight: { display: "flex", alignItems: "center", gap: "12px" },
+  statusStr: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
+  closeBtn: {
+    fontFamily: "'JetBrains Mono', monospace",
+    padding: "4px 10px", background: "transparent",
+    border: "1px solid #1f521f", color: "#1f521f",
+    fontSize: "11px", cursor: "pointer",
+    letterSpacing: "0.05em",
+  },
+  section: { padding: "10px 14px", flexShrink: 0 },
+  sectionTitle: { fontSize: "11px", color: "#1f521f", letterSpacing: "0.1em", textShadow: "none", marginBottom: "4px" },
+  divider: { height: "1px", background: "#1f521f", marginBottom: "8px" },
+  currentAction: { fontSize: "13px", color: "#33ff00", textShadow: "0 0 4px rgba(51,255,0,0.4)" },
+  logList: { flex: 1, overflowY: "auto" as const, padding: "0 14px 14px" },
+  emptyLog: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
+  logRow: { display: "flex", gap: "8px", fontSize: "11px", lineHeight: 1.6, borderBottom: "1px solid #0a0a0a" },
+  logTime: { color: "#1f521f", flexShrink: 0, textShadow: "none" },
+  logTool: { color: "#ffb000", flexShrink: 0, textShadow: "none" },
+  logDesc: { color: "#33ff00", flex: 1, textShadow: "0 0 3px rgba(51,255,0,0.2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
+  logStatus: { flexShrink: 0, fontWeight: 700 },
+};
