@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { AgentConfig, GazeConfig } from "../types";
 
 const DEFAULT_AGENTS: AgentConfig[] = [
@@ -46,17 +46,39 @@ export default function ConfigWizard({ onComplete }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [initLog, setInitLog] = useState<string[]>([]);
   const [enhancing, setEnhancing] = useState<Record<number, boolean>>({});
-
+  const [enhanceError, setEnhanceError] = useState<Record<number, string>>({});
+  const [enhanceFlash, setEnhanceFlash] = useState<Record<number, boolean>>({});
+  const [aiSuggested, setAiSuggested] = useState<Record<number, boolean>>({});
+  const [visibleAgents, setVisibleAgents] = useState<Record<number, boolean>>({});
   const [generating, setGenerating] = useState(false);
+
+  // Stagger visibility for existing default agents on mount
+  useEffect(() => {
+    agents.forEach((_, i) => {
+      setTimeout(() => {
+        setVisibleAgents((prev) => ({ ...prev, [i]: true }));
+      }, i * 80);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generateFromRepo = async () => {
     setGenerating(true);
     try {
       const res = await fetch("/api/agents/generate-from-repo", { method: "POST" });
       if (res.ok) {
-        const { agents: suggested } = await res.json();
+        const { agents: suggested, workspace_name } = await res.json();
         if (Array.isArray(suggested) && suggested.length > 0) {
+          // Clear existing agents and stagger new ones in
+          setVisibleAgents({});
+          setAiSuggested({});
           setAgents(suggested);
+          if (workspace_name) setWorkspaceName(workspace_name);
+          suggested.forEach((_: AgentConfig, i: number) => {
+            setTimeout(() => {
+              setVisibleAgents((prev) => ({ ...prev, [i]: true }));
+              setAiSuggested((prev) => ({ ...prev, [i]: true }));
+            }, i * 100);
+          });
         }
       }
     } catch { /* ignore */ }
@@ -66,36 +88,39 @@ export default function ConfigWizard({ onComplete }: Props) {
   const enhancePrompt = async (i: number) => {
     const seed = agents[i].system_prompt.trim();
     if (!seed) return;
+    // Clear previous error
+    setEnhanceError((prev) => ({ ...prev, [i]: "" }));
     setEnhancing((prev) => ({ ...prev, [i]: true }));
     try {
       const res = await fetch("/api/agents/enhance-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed,
-          name: agents[i].name,
-          role: agents[i].role,
-        }),
+        body: JSON.stringify({ seed, name: agents[i].name, role: agents[i].role }),
       });
       if (res.ok) {
         const { prompt } = await res.json();
         updateAgent(i, { system_prompt: prompt });
+        // Flash green border to signal success
+        setEnhanceFlash((prev) => ({ ...prev, [i]: true }));
+        setTimeout(() => setEnhanceFlash((prev) => ({ ...prev, [i]: false })), 800);
+        // Mark as no longer AI-suggested (user now has enhanced prompt)
+        setAiSuggested((prev) => ({ ...prev, [i]: false }));
+      } else {
+        setEnhanceError((prev) => ({ ...prev, [i]: "Enhancement failed — try again" }));
       }
-    } catch { /* ignore */ }
+    } catch {
+      setEnhanceError((prev) => ({ ...prev, [i]: "Enhancement failed — try again" }));
+    }
     setEnhancing((prev) => ({ ...prev, [i]: false }));
   };
 
   const addAgent = () => {
-    setAgents([
-      ...agents,
-      {
-        name: "",
-        role: "",
-        system_prompt: "",
-        avatar_color: "#33ff00",
-        check_interval: 30,
-      },
+    const newIdx = agents.length;
+    setAgents((prev) => [
+      ...prev,
+      { name: "", role: "", system_prompt: "", avatar_color: "#33ff00", check_interval: 30 },
     ]);
+    setTimeout(() => setVisibleAgents((prev) => ({ ...prev, [newIdx]: true })), 50);
   };
 
   const removeAgent = (i: number) => {
@@ -106,8 +131,12 @@ export default function ConfigWizard({ onComplete }: Props) {
   };
 
   const updateAgent = (i: number, updates: Partial<AgentConfig>) => {
-    setAgents(agents.map((a, idx) => (idx === i ? { ...a, ...updates } : a)));
-    // Clear error for updated field
+    setAgents((prev) => prev.map((a, idx) => (idx === i ? { ...a, ...updates } : a)));
+    // Clear AI suggested badge when user edits any field
+    if (aiSuggested[i]) {
+      setAiSuggested((prev) => ({ ...prev, [i]: false }));
+    }
+    // Clear field error for the updated field
     if (fieldErrors[i]) {
       const field = Object.keys(updates)[0] as keyof FieldErrors;
       if (fieldErrors[i][field]) {
@@ -256,9 +285,13 @@ export default function ConfigWizard({ onComplete }: Props) {
 
         <div style={S.divider}>{'═'.repeat(50)}</div>
 
-        {/* AI Generate from Repo */}
-        <div style={S.generateRow}>
-          <span style={S.generateHint}>// auto-detect agents from this repo:</span>
+        {/* AI Generate from Repo — always visible but primary in empty state */}
+        <div style={{ ...S.generateRow, opacity: agents.length > 0 ? 0.6 : 1 }}>
+          <span style={S.generateHint}>
+            {agents.length === 0
+              ? "// analyze this repo and suggest agents:"
+              : "// regenerate agents from repo:"}
+          </span>
           <button
             style={{
               ...S.generateBtn,
@@ -267,8 +300,9 @@ export default function ConfigWizard({ onComplete }: Props) {
             }}
             onClick={generateFromRepo}
             disabled={generating}
+            title="Reads your repo structure and suggests an AI agent team"
           >
-            {generating ? "[ analyzing repo... ]" : "[ ✦ GENERATE AGENTS FROM REPO ]"}
+            {generating ? "🔍 Reading your repo..." : "🔍 Analyze repo and suggest agents"}
           </button>
         </div>
 
@@ -305,7 +339,14 @@ export default function ConfigWizard({ onComplete }: Props) {
               key={i}
               style={{
                 ...S.agentPane,
-                borderColor: fieldErrors[i] ? "var(--error)" : "var(--border)",
+                borderColor: fieldErrors[i]
+                  ? "var(--error)"
+                  : enhanceFlash[i]
+                  ? "var(--green)"
+                  : "var(--border)",
+                opacity: visibleAgents[i] ? 1 : 0,
+                transform: visibleAgents[i] ? "translateY(0)" : "translateY(8px)",
+                transition: "opacity 0.25s ease, transform 0.25s ease, border-color 0.3s ease",
               }}
             >
               <div style={S.agentPaneHeader}>
@@ -322,6 +363,9 @@ export default function ConfigWizard({ onComplete }: Props) {
                   AGENT_{String(i + 1).padStart(3, "0")}
                   {agent.name ? `  //  ${agent.name.toUpperCase()}` : ""}
                 </span>
+                {aiSuggested[i] && (
+                  <span style={S.aiBadge}>AI</span>
+                )}
                 <button style={S.removeBtn} onClick={() => removeAgent(i)}>
                   [✕]
                 </button>
@@ -371,14 +415,22 @@ export default function ConfigWizard({ onComplete }: Props) {
                     </button>
                   </div>
                   <textarea
-                    style={S.promptTextarea}
+                    style={{
+                      ...S.promptTextarea,
+                      opacity: enhancing[i] ? 0.5 : 1,
+                      transition: "opacity 0.2s ease",
+                    }}
                     value={agent.system_prompt}
                     onChange={(e) => updateAgent(i, { system_prompt: e.target.value })}
                     placeholder={"You are Atlas, a backend engineer..."}
                     rows={3}
+                    disabled={enhancing[i]}
                   />
                   {fieldErrors[i]?.system_prompt && (
                     <div style={S.fieldErr}>{fieldErrors[i].system_prompt}</div>
+                  )}
+                  {enhanceError[i] && (
+                    <div style={S.enhanceErrorText}>{enhanceError[i]}</div>
                   )}
                 </div>
 
@@ -596,6 +648,23 @@ const S: Record<string, React.CSSProperties> = {
     padding: "2px 8px",
     textShadow: "none",
     transition: "background 0.1s, color 0.1s",
+  },
+  enhanceErrorText: {
+    color: "var(--error)",
+    fontSize: "11px",
+    textShadow: "none",
+    marginTop: "3px",
+    paddingLeft: "2px",
+  },
+  aiBadge: {
+    fontSize: "9px",
+    color: "#0a0a0a",
+    background: "var(--amber)",
+    padding: "1px 5px",
+    letterSpacing: "0.08em",
+    fontWeight: 700,
+    textShadow: "none",
+    marginRight: "4px",
   },
   promptTextarea: {
     background: "transparent",

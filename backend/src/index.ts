@@ -19,6 +19,7 @@ import { messageRoutes } from "./routes/messages.js";
 import { agentRoutes } from "./routes/agents.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { configRoutes } from "./routes/config.js";
+import { dmRoutes } from "./routes/dms.js";
 import { DEFAULT_AGENTS, DEFAULT_SETTINGS } from "./config.js";
 
 // Augment Fastify with SSE clients map
@@ -90,6 +91,7 @@ export async function startServer(gazeDir: string, port: number): Promise<void> 
   await app.register(agentRoutes, { gazeDir });
   await app.register(settingsRoutes);
   await app.register(configRoutes, { gazeDir });
+  await app.register(dmRoutes);
 
   // GET /api/health
   app.get("/api/health", async () => ({

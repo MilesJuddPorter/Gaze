@@ -105,6 +105,23 @@ function createTables(): void {
       description TEXT DEFAULT '',
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS dm_channels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent1_id INTEGER NOT NULL REFERENCES agents(id),
+      agent2_id INTEGER NOT NULL REFERENCES agents(id),
+      name TEXT NOT NULL UNIQUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS dm_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      channel_id INTEGER NOT NULL REFERENCES dm_channels(id),
+      sender_id INTEGER REFERENCES agents(id),  -- NULL = human "You"
+      sender_name TEXT NOT NULL,
+      content TEXT NOT NULL,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -349,4 +366,64 @@ export function getAgentActivity(agentId: number, limit = 20): ActivityEntry[] {
   return d.prepare(`
     SELECT * FROM agent_activity WHERE agent_id = ? ORDER BY id DESC LIMIT ?
   `).all(agentId, limit) as ActivityEntry[];
+}
+
+// ---- DM Channels ----
+
+export interface DmChannel {
+  id: number;
+  agent1_id: number;
+  agent2_id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface DmMessage {
+  id: number;
+  channel_id: number;
+  sender_id: number | null;
+  sender_name: string;
+  content: string;
+  timestamp: string;
+}
+
+export function getOrCreateDmChannel(agent1Id: number, agent2Id: number): DmChannel {
+  const d = getDb();
+  // Canonical name: always sort IDs so dm-1-3 and dm-3-1 are the same channel
+  const [lo, hi] = [Math.min(agent1Id, agent2Id), Math.max(agent1Id, agent2Id)];
+  const name = `dm-${lo}-${hi}`;
+  const existing = d.prepare("SELECT * FROM dm_channels WHERE name = ?").get(name) as DmChannel | undefined;
+  if (existing) return existing;
+  const result = d.prepare(
+    "INSERT INTO dm_channels (agent1_id, agent2_id, name) VALUES (?, ?, ?)"
+  ).run(lo, hi, name);
+  return d.prepare("SELECT * FROM dm_channels WHERE id = ?").get(result.lastInsertRowid) as DmChannel;
+}
+
+export function getAllDmChannels(): DmChannel[] {
+  return getDb().prepare("SELECT * FROM dm_channels ORDER BY id DESC").all() as DmChannel[];
+}
+
+export function getDmChannel(channelId: number): DmChannel | undefined {
+  return getDb().prepare("SELECT * FROM dm_channels WHERE id = ?").get(channelId) as DmChannel | undefined;
+}
+
+export function postDmMessage(channelId: number, senderId: number | null, senderName: string, content: string): DmMessage {
+  const d = getDb();
+  const result = d.prepare(
+    "INSERT INTO dm_messages (channel_id, sender_id, sender_name, content) VALUES (?, ?, ?, ?)"
+  ).run(channelId, senderId, senderName, content);
+  return d.prepare("SELECT * FROM dm_messages WHERE id = ?").get(result.lastInsertRowid) as DmMessage;
+}
+
+export function getDmMessages(channelId: number, limit = 50): DmMessage[] {
+  return getDb().prepare(
+    "SELECT * FROM dm_messages WHERE channel_id = ? ORDER BY id DESC LIMIT ?"
+  ).all(channelId, limit) as DmMessage[];
+}
+
+export function getLatestDmMessages(limit = 30): DmMessage[] {
+  return getDb().prepare(
+    "SELECT * FROM dm_messages ORDER BY id DESC LIMIT ?"
+  ).all(limit) as DmMessage[];
 }

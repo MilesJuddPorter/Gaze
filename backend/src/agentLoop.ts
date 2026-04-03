@@ -7,6 +7,8 @@ import {
   updateAgentStatus,
   updateAgentLastRead,
   postMessage,
+  postDmMessage,
+  getOrCreateDmChannel,
   logActivity,
   getAgentActivity,
   type Agent,
@@ -294,4 +296,29 @@ export function getRunningAgentIds(): number[] {
   return Array.from(_running.entries())
     .filter(([, v]) => v)
     .map(([k]) => k);
+}
+
+/**
+ * Send a DM from one agent to another.
+ * Creates the DM channel if it doesn't exist, persists the message,
+ * broadcasts via SSE, and wakes the recipient agent.
+ */
+export function sendAgentDm(fromAgentId: number, toAgentId: number, content: string): void {
+  const fromAgent = getAgent(fromAgentId);
+  const toAgent = getAgent(toAgentId);
+  if (!fromAgent || !toAgent) return;
+
+  const channel = getOrCreateDmChannel(fromAgentId, toAgentId);
+  const msg = postDmMessage(channel.id, fromAgentId, fromAgent.name, content);
+
+  broadcast("dm_message", {
+    ...msg,
+    channel_id: channel.id,
+    channel_name: channel.name,
+    from_agent: { id: fromAgent.id, name: fromAgent.name, avatar_color: fromAgent.avatar_color },
+    to_agent: { id: toAgent.id, name: toAgent.name, avatar_color: toAgent.avatar_color },
+  });
+
+  // Wake the recipient
+  wakeAgent(toAgentId);
 }
