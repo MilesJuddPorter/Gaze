@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Agent } from "../types";
 
 interface Props {
@@ -6,75 +6,113 @@ interface Props {
   agentsRunning: boolean;
   onStart: () => void;
   onStop: () => void;
-  thinkingAgentIds?: number[];
+  onToggleOoo: (agentId: number, isOoo: boolean) => void;
 }
 
-const STATUS_CLASS: Record<string, string> = {
-  idle:     "roster-status-idle",
-  thinking: "roster-status-think",
-  acting:   "roster-status-act",
-  sleeping: "roster-status-sleep",
+const STATUS_DISPLAY: Record<string, string> = {
+  idle:     "🌙 resting",
+  thinking: "💭 thinking...",
+  acting:   "⚡ working",
+  sleeping: "💤 sleeping",
 };
 
-const STATUS_STR: Record<string, string> = {
-  idle:     "[IDLE]",
-  thinking: "[····]",
-  acting:   "[ACT·]",
-  sleeping: "[ZZZ]",
-};
+function getAvatarClass(agent: Agent): string {
+  if (!!agent.is_ooo) return "ooo";
+  if (agent.status === "thinking") return "thinking";
+  if (agent.status === "acting") return "active";
+  if (agent.status === "sleeping") return "sleeping";
+  return "active";
+}
 
-export default function AgentRoster({ agents, agentsRunning, onStart, onStop, thinkingAgentIds = [] }: Props) {
+export default function AgentRoster({ agents, agentsRunning, onStart, onStop, onToggleOoo }: Props) {
+  const [divingIds, setDivingIds] = useState<Set<number>>(new Set());
+
+  const handleToggleOoo = (agent: Agent) => {
+    const newOoo = !agent.is_ooo;
+    if (newOoo) {
+      // Trigger dive animation
+      setDivingIds((prev) => new Set(prev).add(agent.id));
+      setTimeout(() => {
+        setDivingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(agent.id);
+          return next;
+        });
+      }, 500);
+    }
+    onToggleOoo(agent.id, newOoo);
+  };
+
   return (
     <div className="forum-roster-col">
-      <div className="roster-header">+--- AGENTS ---+</div>
+      <div className="roster-header">🌙 The Den</div>
 
-      {agents.map((agent) => {
-        const color = agent.avatar_color || "#33ff00";
-        const glow = `0 0 5px ${color}80`;
-        const statusKey = agent.status || "idle";
-        const statusClass = STATUS_CLASS[statusKey] || "roster-status-idle";
-        const statusStr = STATUS_STR[statusKey] || "[----]";
-        const isThinking = thinkingAgentIds.includes(agent.id);
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {agents.map((agent) => {
+          const isOoo = !!agent.is_ooo;
+          const isDiving = divingIds.has(agent.id);
+          const statusLabel = isOoo
+            ? "🗑️ out of den"
+            : STATUS_DISPLAY[agent.status] || "🌙 resting";
 
-        return (
-          <div key={agent.id} className="roster-agent">
-            <div className="roster-agent-name">
-              <span
-                className="agent-avatar"
-                style={{ background: color, border: `1px solid ${color}` }}
-              >
-                {agent.name.charAt(0).toUpperCase()}
-              </span>
-              <span style={{ color, textShadow: glow }}>
-                {agent.name.toUpperCase()}
-              </span>
-            </div>
-            <div className="roster-agent-role">role: {agent.role.toLowerCase()}</div>
-            <div className={`roster-status ${statusClass}`}>
-              status: {statusStr}
-            </div>
-            {isThinking && (
-              <div className="msg-thinking">
-                {agent.name.toLowerCase()} is thinking█
+          return (
+            <div
+              key={agent.id}
+              className={`roster-agent${isOoo ? " ooo" : ""}`}
+            >
+              <div className="roster-agent-header">
+                {/* Avatar with state */}
+                <div
+                  className={`avatar avatar-size-sm ${getAvatarClass(agent)}`}
+                  style={{
+                    animation: isDiving ? "ooo-dive 0.5s ease" : undefined,
+                  }}
+                >
+                  {isOoo ? "🗑️" : "🦝"}
+                </div>
+
+                {/* Name */}
+                <span className={`roster-agent-name${isOoo ? " ooo" : ""}`}>
+                  {agent.name}
+                </span>
+
+                {/* OOO Toggle */}
+                <button
+                  className={`roster-ooo-btn${isOoo ? " active" : ""}`}
+                  onClick={() => handleToggleOoo(agent)}
+                  title={isOoo ? "Back in den" : "Mark OOO"}
+                >
+                  {isOoo ? "Back" : "OOO"}
+                </button>
               </div>
-            )}
-            {agent.current_action && !isThinking && (
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--muted)", textShadow: "none" }}>
-                {agent.current_action}
+
+              <div className="roster-agent-role">{agent.role}</div>
+
+              <div style={{ paddingLeft: "46px" }}>
+                <span
+                  className={`status-badge ${
+                    isOoo ? "status-ooo" :
+                    agent.status === "thinking" ? "status-think" :
+                    agent.status === "acting" ? "status-act" :
+                    agent.status === "sleeping" ? "status-sleep" : "status-idle"
+                  }`}
+                >
+                  {statusLabel}
+                </span>
               </div>
-            )}
-          </div>
-        );
-      })}
+            </div>
+          );
+        })}
+      </div>
 
       <div className="roster-controls">
         {agentsRunning ? (
-          <button className="btn btn-sm btn-danger" onClick={onStop}>
-            [ STOP ]
+          <button className="btn btn-secondary btn-sm" onClick={onStop} style={{ flex: 1 }}>
+            ⏹ Stop
           </button>
         ) : (
-          <button className="btn btn-sm" onClick={onStart}>
-            [ START ]
+          <button className="btn btn-primary btn-sm" onClick={onStart} style={{ flex: 1 }}>
+            ▶ Start
           </button>
         )}
       </div>

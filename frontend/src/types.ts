@@ -10,6 +10,7 @@ export interface Agent {
   last_read_at: string;
   created_at: string;
   running?: boolean;
+  is_ooo?: number; // 0 or 1
 }
 
 export interface Reaction {

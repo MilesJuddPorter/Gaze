@@ -248,10 +248,10 @@ export default function ConfigWizard({ onComplete }: Props) {
               style={{
                 ...S.initLine,
                 color: line.startsWith("[OK]")
-                  ? "var(--green)"
+                  ? "var(--amber)"
                   : line.startsWith("[ERR]")
                   ? "var(--error)"
-                  : "var(--text-dim)",
+                  : "var(--text-muted)",
               }}
             >
               {">"} {line}
@@ -342,7 +342,7 @@ export default function ConfigWizard({ onComplete }: Props) {
                 borderColor: fieldErrors[i]
                   ? "var(--error)"
                   : enhanceFlash[i]
-                  ? "var(--green)"
+                  ? "var(--amber)"
                   : "var(--border)",
                 opacity: visibleAgents[i] ? 1 : 0,
                 transform: visibleAgents[i] ? "translateY(0)" : "translateY(8px)",
@@ -515,21 +515,21 @@ const S: Record<string, React.CSSProperties> = {
     gap: "4px",
   },
   ascii: {
-    fontFamily: "'JetBrains Mono', monospace",
-    color: "var(--green)",
-    textShadow: "var(--glow-strong)",
+    fontFamily: "'Nunito', monospace",
+    color: "var(--amber)",
+    textShadow: "var(--glow-amber)",
     fontSize: "13px",
     lineHeight: 1.2,
     margin: 0,
   },
   subtitle: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     letterSpacing: "0.08em",
     textShadow: "none",
   },
   divider: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     textShadow: "none",
     letterSpacing: 0,
@@ -541,14 +541,14 @@ const S: Record<string, React.CSSProperties> = {
     gap: "10px",
   },
   sectionLabel: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     letterSpacing: "0.1em",
     textShadow: "none",
   },
   emptyPane: {
-    border: "1px dashed var(--muted)",
-    background: "var(--bg-pane)",
+    border: "1px dashed var(--text-dim)",
+    background: "var(--bg-surface)",
     padding: "24px",
     display: "flex",
     flexDirection: "column",
@@ -556,24 +556,24 @@ const S: Record<string, React.CSSProperties> = {
     gap: "6px",
   },
   emptyPlus: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "24px",
     textShadow: "none",
   },
   emptyLabel: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "13px",
     letterSpacing: "0.1em",
     textShadow: "none",
   },
   emptyHint: {
-    color: "var(--text-dim)",
+    color: "var(--text-muted)",
     fontSize: "12px",
     textShadow: "none",
   },
   agentPane: {
     border: "1px solid var(--border)",
-    background: "var(--bg-pane)",
+    background: "var(--bg-surface)",
   },
   agentPaneHeader: {
     display: "flex",
@@ -634,7 +634,7 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
   },
   promptLabel: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "11px",
     textShadow: "none",
   },
@@ -642,7 +642,7 @@ const S: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "1px solid var(--amber)",
     color: "var(--amber)",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Nunito', monospace",
     fontSize: "10px",
     letterSpacing: "0.08em",
     padding: "2px 8px",
@@ -672,15 +672,15 @@ const S: Record<string, React.CSSProperties> = {
     borderTop: "1px dashed var(--border)",
     borderBottom: "1px dashed var(--border)",
     outline: "none",
-    color: "var(--green)",
-    fontFamily: "'JetBrains Mono', monospace",
+    color: "var(--amber)",
+    fontFamily: "'Nunito', monospace",
     fontSize: "12px",
-    textShadow: "var(--glow)",
+    textShadow: "var(--glow-sm)",
     width: "100%",
     minHeight: "60px",
     resize: "vertical",
     padding: "8px 0",
-    caretColor: "var(--green)",
+    caretColor: "var(--amber)",
     lineHeight: 1.5,
   },
   inlineRow: {
@@ -698,20 +698,20 @@ const S: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   colorHex: {
-    color: "var(--text-dim)",
+    color: "var(--text-muted)",
     fontSize: "12px",
     textShadow: "none",
   },
   unit: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     textShadow: "none",
   },
   addBtn: {
     background: "transparent",
-    border: "1px dashed var(--muted)",
-    color: "var(--muted)",
-    fontFamily: "'JetBrains Mono', monospace",
+    border: "1px dashed var(--text-dim)",
+    color: "var(--text-dim)",
+    fontFamily: "'Nunito', monospace",
     fontSize: "12px",
     letterSpacing: "0.1em",
     padding: "8px",
@@ -731,13 +731,13 @@ const S: Record<string, React.CSSProperties> = {
   },
   launchBtn: {
     background: "transparent",
-    border: "1px solid var(--green)",
-    color: "var(--green)",
-    fontFamily: "'JetBrains Mono', monospace",
+    border: "1px solid var(--amber)",
+    color: "var(--amber)",
+    fontFamily: "'Nunito', monospace",
     fontSize: "13px",
     letterSpacing: "0.15em",
     padding: "10px",
-    textShadow: "var(--glow)",
+    textShadow: "var(--glow-sm)",
     width: "100%",
     textAlign: "center" as const,
     transition: "background 0.1s, color 0.1s",
@@ -749,19 +749,19 @@ const S: Record<string, React.CSSProperties> = {
     flexWrap: "wrap" as const,
   },
   generateHint: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     textShadow: "none",
   },
   generateBtn: {
     background: "transparent",
-    border: "1px solid var(--green)",
-    color: "var(--green)",
-    fontFamily: "'JetBrains Mono', monospace",
+    border: "1px solid var(--amber)",
+    color: "var(--amber)",
+    fontFamily: "'Nunito', monospace",
     fontSize: "12px",
     letterSpacing: "0.08em",
     padding: "5px 12px",
-    textShadow: "var(--glow)",
+    textShadow: "var(--glow-sm)",
     transition: "background 0.1s, color 0.1s",
   },
   // Init sequence
@@ -773,14 +773,14 @@ const S: Record<string, React.CSSProperties> = {
     width: "100%",
   },
   initTitle: {
-    color: "var(--green)",
+    color: "var(--amber)",
     fontSize: "16px",
     letterSpacing: "0.2em",
-    textShadow: "var(--glow-strong)",
+    textShadow: "var(--glow-amber)",
     marginBottom: "4px",
   },
   initDivider: {
-    color: "var(--muted)",
+    color: "var(--text-dim)",
     fontSize: "12px",
     textShadow: "none",
     marginBottom: "8px",
@@ -788,7 +788,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   initLine: {
     fontSize: "13px",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Nunito', monospace",
     textShadow: "none",
   },
 };

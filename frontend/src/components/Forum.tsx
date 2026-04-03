@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Message, Agent } from "../types";
 import ForumFeed from "./ForumFeed";
-import AgentActivityBoard from "./AgentActivityBoard";
+import AgentRoster from "./AgentRoster";
 import InputBar from "./InputBar";
 import DmPanel from "./DmPanel";
 import { useGazeSSE } from "../context/GazeSSE";
@@ -12,33 +12,26 @@ interface Props {
 }
 
 export default function Forum({ workspaceName, repoPath = "~" }: Props) {
-  // Pull messages + agents from the shared SSE context (single connection)
   const { messages, agents, setAgents } = useGazeSSE();
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [agentsRunning, setAgentsRunning] = useState(false);
   const [dmPanelOpen, setDmPanelOpen] = useState(false);
 
-  // Load initial history from REST on mount (SSE only delivers new events)
   useEffect(() => {
     if (initialLoaded) return;
     setInitialLoaded(true);
 
-    fetch("/api/messages?limit=100")
+    fetch("/api/agents")
       .then((r) => r.json())
-      .then((msgs: Message[]) => {
-        // Merge with any SSE messages already received
-        // The SSE context manages its own state; we only seed via REST here once
-        // by pushing to the context's setMessages — but the context doesn't expose that.
-        // Instead: ForumFeed receives context messages directly (already live).
-        // This REST call is no longer needed here since the SSE context handles state.
-        // Keeping the fetch only to pre-seed context on first load via a trick:
-        // We fire a dummy load to warm up agent state.
-        void msgs; // context already holds live messages from SSE
+      .then((ag: Agent[]) => {
+        setAgents(ag);
+        setAgentsRunning(ag.some((a) => a.running));
       })
       .catch(console.error);
 
-    fetch("/api/agents")
+    fetch("/api/agents/status/running")
       .then((r) => r.json())
-      .then((ag: Agent[]) => setAgents(ag))
+      .then((d) => setAgentsRunning(d.running ?? false))
       .catch(console.error);
   }, []);
 
@@ -52,41 +45,63 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
 
   async function handleStart() {
     await fetch("/api/agents/start", { method: "POST" }).catch(console.error);
+    setAgentsRunning(true);
     fetch("/api/agents").then((r) => r.json()).then(setAgents).catch(console.error);
   }
 
   async function handleStop() {
     await fetch("/api/agents/stop", { method: "POST" }).catch(console.error);
+    setAgentsRunning(false);
     fetch("/api/agents").then((r) => r.json()).then(setAgents).catch(console.error);
   }
+
+  async function handleToggleOoo(agentId: number, isOoo: boolean) {
+    try {
+      await fetch(`/api/agents/${agentId}/ooo`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_ooo: isOoo }),
+      });
+      setAgents((prev) => prev.map((a) => a.id === agentId ? { ...a, is_ooo: isOoo ? 1 : 0 } : a));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const activeCount = agents.filter((a) => a.status !== "sleeping" && !a.is_ooo).length;
+  const statusText = activeCount > 0
+    ? `🌙 ${agents.length} in the den`
+    : `💤 ${agents.length} sleeping`;
 
   return (
     <div className="forum-root">
       {/* Header */}
       <div className="forum-header">
-        <span className="forum-header-logo">GAZE</span>
-        <span className="forum-header-sep">//</span>
-        <span className="forum-header-path">{repoPath}</span>
-        <span className="forum-header-sep">//</span>
+        <div className="forum-header-logo">🦝 {workspaceName}</div>
+        <div className="forum-header-sep" />
+        <span className="forum-header-path">📁 {repoPath}</span>
+        <div className="forum-header-sep" />
         <span className="forum-header-channel">#forum</span>
-        <span className="forum-header-sep">//</span>
-        <span className="forum-header-status">
-          {agents.filter((a) => a.status !== "sleeping").length > 0
-            ? `[OK] ${agents.length} agent${agents.length !== 1 ? "s" : ""} online`
-            : `[--] ${agents.length} agent${agents.length !== 1 ? "s" : ""} idle`}
-        </span>
+        <div className="forum-header-sep" />
+        <span className="forum-header-status">{statusText}</span>
       </div>
 
-      {/* Body: feed + roster */}
+      {/* Body */}
       <div className="forum-body">
         <div className="forum-feed-col">
-          <ForumFeed messages={messages} agents={agents} repoPath={repoPath} />
-          <InputBar onSend={handleSend} repoPath={repoPath} />
+          <ForumFeed messages={messages} agents={agents} />
+          <InputBar onSend={handleSend} />
         </div>
-        <AgentActivityBoard agents={agents} onStart={handleStart} onStop={handleStop} />
+
+        <AgentRoster
+          agents={agents}
+          agentsRunning={agentsRunning}
+          onStart={handleStart}
+          onStop={handleStop}
+          onToggleOoo={handleToggleOoo}
+        />
       </div>
 
-      {/* DM threads panel — below the main body, collapsible */}
       <DmPanel isOpen={dmPanelOpen} onToggle={() => setDmPanelOpen((o) => !o)} />
     </div>
   );

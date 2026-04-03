@@ -5,7 +5,7 @@ interface Props {
   repoPath?: string;
 }
 
-export default function InputBar({ onSend, repoPath = "~" }: Props) {
+export default function InputBar({ onSend }: Props) {
   const [value, setValue] = useState("");
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +32,7 @@ export default function InputBar({ onSend, repoPath = "~" }: Props) {
 
   return (
     <div className="input-bar">
-      <span className="input-prompt">you@gaze:{repoPath}$</span>
+      <span className="input-raccoon">🦝</span>
       <input
         ref={inputRef}
         className="input-field"
@@ -40,18 +40,17 @@ export default function InputBar({ onSend, repoPath = "~" }: Props) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder=""
+        placeholder="Post to #forum..."
         disabled={sending}
         autoComplete="off"
-        spellCheck={false}
         autoFocus
       />
       <button
-        className="btn input-send"
+        className="btn btn-primary input-send"
         onClick={handleSend}
         disabled={!value.trim() || sending}
       >
-        [ SEND ]
+        {sending ? "..." : "Send"}
       </button>
     </div>
   );

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# gaze — launch the Gaze AI agent workspace in any directory
+# Install: ln -sf ~/Desktop/Code/Gaze/bin/gaze /usr/local/bin/gaze
+# Or add ~/Desktop/Code/Gaze/bin to your PATH in ~/.zshrc
+
+set -e
+
+# Resolve the actual script location even when called via symlink
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+GAZE_BIN_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+GAZE_REPO="$(dirname "$GAZE_BIN_DIR")"
+
+# TARGET_DIR defaults to wherever the user ran `gaze` from (their project)
+export GAZE_TARGET_DIR="${GAZE_TARGET_DIR:-$PWD}"
+
+exec "$GAZE_REPO/start.sh" "$@"

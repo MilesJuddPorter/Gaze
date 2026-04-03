@@ -34,11 +34,11 @@ export default function App() {
 
   if (appState === "loading") {
     return (
-      <div style={S.screen}>
-        <div style={S.loadText}>
-          GAZE<span style={S.cursor}>█</span>
+      <div className="loading-screen">
+        <span style={{ fontSize: "48px", animation: "breathe 2s ease-in-out infinite" }}>🦝</span>
+        <div style={{ color: "var(--text-dim)", fontSize: "var(--text-sm)" }}>
+          Setting up the den...
         </div>
-        <div style={S.loadSub}>// initializing...</div>
       </div>
     );
   }

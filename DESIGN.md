@@ -1,20 +1,34 @@
-# Gaze — Design System v2: Midnight Den 🦝
+# Gaze — Design System v3: Obsidian
 
-**Theme:** Warm, alive, slightly chaotic. A raccoon's cozy nest at night.
-Authored by Cat. This replaces the Terminal CLI spec entirely.
+**Production-ready. Market-ready. No emoji decoration.**
+Authored by Cat. This replaces all previous design specs.
 
 ---
 
 ## Design Philosophy
 
-Raccoons are curious, clever, and operate at night. They collect things, adapt to any environment, and have distinctive personalities. The UI should feel like you're peeking into their den — warm but a little messy, full of personality, definitely alive.
+Gaze is a professional developer tool. The raccoon is the brand — a geometric SVG logomark — not decoration scattered across the UI. The interface should feel like Linear, Vercel, or Raycast: dark, precise, fast, confident.
 
-**Key signatures:**
-- Warm amber glow against deep forest night
-- Soft, rounded edges — nothing sharp or harsh
-- Agents feel like creatures, not services — they sleep, wake up, go OOO
-- Subtle animations that suggest life (breathing, blinking, wiggling)
-- Typography that's friendly and readable, not cold monospace
+**Rules:**
+1. Emoji are never used as UI decoration, status indicators, or avatars. They live in chat content only.
+2. Every color choice has a reason. Amber is used for active states and CTAs only — not flavor.
+3. Typography does the heavy lifting. Size, weight, and spacing create hierarchy.
+4. Animation serves function. Framer Motion springs for panel entry, message load, status transitions. Nothing gratuitous.
+5. Icons from Lucide only. Consistent 16px, strokeWidth 1.5.
+
+---
+
+## Tech Stack Additions
+
+```bash
+npm install framer-motion @radix-ui/react-tooltip @radix-ui/react-dropdown-menu lucide-react inter-variable
+```
+
+Or with the Google Fonts import (no npm needed for Inter):
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+```
 
 ---
 
@@ -22,47 +36,75 @@ Raccoons are curious, clever, and operate at night. They collect things, adapt t
 
 ```css
 :root {
-  /* Backgrounds */
-  --bg:           #0e1015;   /* deep forest night */
-  --bg-surface:   #141720;   /* raised surfaces (cards, panels) */
-  --bg-elevated:  #1a1f2e;   /* modals, popovers */
-  --bg-hover:     #1e2436;   /* hover state */
-  --bg-input:     #111520;   /* input backgrounds */
+  /* ── Backgrounds ─────────────────────────────── */
+  --bg:           #0C0E12;   /* page background */
+  --surface:      #13161D;   /* cards, panels, sidebar */
+  --elevated:     #1C2030;   /* modals, dropdowns, tooltips */
+  --overlay:      rgba(0, 0, 0, 0.6);
 
-  /* Accent palette */
-  --amber:        #e8850a;   /* primary warm glow */
-  --amber-soft:   #f0a843;   /* lighter amber for highlights */
-  --amber-dim:    #7a4205;   /* dimmed amber for borders/subtle */
-  --cream:        #f0e8d8;   /* soft cream for primary text */
-  --sage:         #4a7c59;   /* muted sage for secondary/success */
-  --sage-dim:     #2a4a35;   /* very dimmed sage */
+  /* ── Borders ─────────────────────────────────── */
+  --border:       #1E2330;   /* default border */
+  --border-focus: #374151;   /* focused inputs */
+  --border-active:#F59E0B;   /* active/selected */
 
-  /* Semantic */
-  --text:         #f0e8d8;   /* cream — all primary text */
-  --text-dim:     #9a8e7a;   /* secondary text, timestamps */
-  --text-muted:   #5a5248;   /* muted labels, placeholders */
-  --error:        #e05252;   /* warm red, not harsh */
-  --warning:      #e8a20a;   /* amber-adjacent warning */
-  --success:      #4a7c59;   /* sage */
+  /* ── Text ────────────────────────────────────── */
+  --text-primary: #E8EDF2;   /* headings, primary content */
+  --text-secondary:#8B95A3;  /* secondary labels, timestamps */
+  --text-muted:   #4A5568;   /* placeholders, disabled */
+  --text-inverse: #0C0E12;   /* text on amber backgrounds */
 
-  /* Borders */
-  --border:       #252a38;   /* subtle border */
-  --border-warm:  #3a2e1a;   /* warm-tinted border */
+  /* ── Accent (amber — use sparingly) ──────────── */
+  --amber:        #F59E0B;   /* CTAs, active states, unread */
+  --amber-hover:  #FBBF24;   /* hover on amber */
+  --amber-subtle: rgba(245, 158, 11, 0.12); /* backgrounds, badges */
+  --amber-border: rgba(245, 158, 11, 0.3);
 
-  /* Glow effects */
-  --glow-amber:   0 0 12px rgba(232, 133, 10, 0.3);
-  --glow-sm:      0 0 6px rgba(232, 133, 10, 0.2);
+  /* ── Semantic ────────────────────────────────── */
+  --success:      #10B981;
+  --success-subtle: rgba(16, 185, 129, 0.1);
+  --error:        #EF4444;
+  --error-subtle: rgba(239, 68, 68, 0.1);
+  --warning:      #F59E0B;
+  --info:         #3B82F6;
 
-  /* Spacing */
-  --radius-sm:    6px;
-  --radius-md:    10px;
-  --radius-lg:    16px;
-  --radius-full:  9999px;
+  /* ── Status colors ───────────────────────────── */
+  --status-active:  #10B981;   /* green — active/running */
+  --status-think:   #3B82F6;   /* blue — thinking */
+  --status-idle:    #4A5568;   /* gray — idle */
+  --status-ooo:     #6B7280;   /* dimmed gray — OOO */
 
-  /* Elevation */
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg:    0 8px 32px rgba(0,0,0,0.6);
+  /* ── Radii ───────────────────────────────────── */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ─────────────────────────────────── */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,0.6);
+
+  /* ── Typography scale ────────────────────────── */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-md:   15px;
+  --text-lg:   17px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+
+  /* ── Spacing ─────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
 }
 ```
 
@@ -71,320 +113,715 @@ Raccoons are curious, clever, and operate at night. They collect things, adapt t
 ## Typography
 
 ```css
-/* Import in index.html head */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-body {
-  font-family: 'Nunito', -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--cream);
-  background: var(--bg);
-}
-
-/* Type scale */
---text-xs:   11px;
---text-sm:   13px;
---text-base: 14px;
---text-md:   16px;
---text-lg:   18px;
---text-xl:   22px;
-
-/* Headers: sentence case, warm, not all-caps */
-h1, h2, h3 { font-weight: 700; color: var(--cream); }
+/* Hierarchy */
+.text-heading    { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
+.text-subheading { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+.text-body       { font-size: 14px; font-weight: 400; color: var(--text-primary); line-height: 1.6; }
+.text-small      { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.text-caption    { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.text-mono       { font-family: 'Geist Mono', 'Fira Code', monospace; font-size: 12px; }
 ```
 
 ---
 
-## Raccoon Avatar System
+## Component System
 
-Each agent gets a unique raccoon avatar — rendered as an SVG emoji-style face, NOT a letter initial.
+### Agent Avatar
 
-**Avatar variants (assign by agent index or name hash):**
-- `raccoon-curious` — eyes wide open, slight tilt
-- `raccoon-focused` — narrowed eyes, determined
-- `raccoon-playful` — one eyebrow up, slight smirk
-- `raccoon-sleepy` — half-closed eyes, relaxed
-- `raccoon-alert` — ears perked forward, eyes bright
+Letterform avatar with gradient ring. No emoji.
 
-**Avatar states:**
-- **Active/idle:** normal face, soft amber outline ring
-- **Thinking:** face has a subtle wobble animation (2% scale pulse, 1.5s)
-- **Acting:** ring glows amber, slight lean-forward tilt
-- **Sleeping (no unread mentions):** eyes closed, soft breathing animation (opacity 0.7-1.0 pulse)
-- **OOO (in trash):** face peeking up from trash bin, waving paw emoji overlay, dimmed
-
-**Implementation:**
-Use emoji + CSS for the avatar initially. Each agent gets one of these based on `(agent.id % 5)`:
-```
-0: 🦝  (base raccoon)
-1: 🦝  with amber ring (active)
-```
-For v1 of the reskin just use the 🦝 emoji styled with CSS. Custom SVG variants can come in v2.
-
-**Avatar size:** 36px in messages, 32px in roster cards, 48px in agent deep dive.
-
-**Avatar container:**
 ```css
 .avatar {
+  position: relative;
   border-radius: var(--radius-full);
-  border: 2px solid var(--amber-dim);
-  background: var(--bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px; /* emoji scale */
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  background: var(--elevated);
+
+  /* Ring via box-shadow */
+  box-shadow: 0 0 0 2px var(--border), 0 0 0 3px transparent;
+  transition: box-shadow 0.2s ease;
 }
 .avatar.active {
-  border-color: var(--amber);
-  box-shadow: var(--glow-sm);
+  box-shadow: 0 0 0 2px var(--border), 0 0 0 3px var(--status-active);
 }
-.avatar.sleeping {
-  opacity: 0.6;
-  animation: breathe 3s ease-in-out infinite;
+.avatar.thinking {
+  box-shadow: 0 0 0 2px var(--border), 0 0 0 3px var(--status-think);
+  animation: ring-pulse 2s ease-in-out infinite;
 }
 .avatar.ooo {
-  opacity: 0.5;
-  filter: grayscale(0.5);
+  filter: grayscale(1) brightness(0.5);
+  box-shadow: 0 0 0 2px var(--border);
 }
-@keyframes breathe {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 0.75; }
+.avatar.sleeping {
+  box-shadow: 0 0 0 2px var(--border);
+  opacity: 0.6;
+}
+
+.avatar-sm  { width: 28px; height: 28px; font-size: 11px; }
+.avatar-md  { width: 34px; height: 34px; font-size: 13px; }
+.avatar-lg  { width: 40px; height: 40px; font-size: 15px; }
+.avatar-xl  { width: 56px; height: 56px; font-size: 20px; }
+
+/* Initial background uses agent's avatar_color at 20% opacity */
+/* Set via inline style: background: {color}33 + color: {color} on letter */
+```
+
+### Status Indicator
+
+```css
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.status-dot.active   { background: var(--status-active); }
+.status-dot.thinking { background: var(--status-think); animation: ring-pulse 1.5s infinite; }
+.status-dot.idle     { background: var(--status-idle); }
+.status-dot.ooo      { background: var(--status-ooo); }
+
+.status-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Status text */
+.status-active   { color: var(--status-active); }
+.status-thinking { color: var(--status-think); }
+.status-idle     { color: var(--status-idle); }
+.status-ooo      { color: var(--status-ooo); }
+```
+
+### Buttons
+
+```css
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+/* Primary — amber */
+.btn-primary {
+  background: var(--amber);
+  color: var(--text-inverse);
+  font-weight: 600;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.btn-primary:hover { background: var(--amber-hover); }
+
+/* Secondary */
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+  padding: 7px 14px;
+  font-size: 13px;
+}
+.btn-secondary:hover { background: var(--elevated); border-color: var(--border-focus); }
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.btn-ghost:hover { background: var(--surface); color: var(--text-primary); }
+
+/* Danger */
+.btn-danger {
+  background: var(--error-subtle);
+  color: var(--error);
+  border-color: rgba(239,68,68,0.2);
+  padding: 7px 14px;
+  font-size: 13px;
+}
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+/* Sizes */
+.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.btn-lg { padding: 10px 20px; font-size: 15px; border-radius: var(--radius-lg); }
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 ```
 
----
+### Inputs
 
-## Agent Status in Roster
+```css
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08);
+}
+.input::placeholder { color: var(--text-muted); }
+.input.error { border-color: var(--error); box-shadow: 0 0 0 3px var(--error-subtle); }
 
-Replace status strings with warm, natural language:
-
-| State | Display |
-|---|---|
-| idle | 🌙 resting |
-| thinking | 💭 thinking... |
-| acting | ⚡ working |
-| sleeping | 💤 sleeping |
-| ooo | 🗑️ out of den |
-| error | ⚠️ something's off |
-
-Status badge: small pill, --bg-elevated background, text in relevant color.
-
----
-
-## OOO Feature — Full Spec
-
-### Toggle Location
-- In the agent roster card, top-right corner — a small toggle/button
-- Label: "Mark OOO" (visible on hover of the card)
-- When OOO is active: button becomes "Back in den"
-
-### Visual State (OOO active)
-
-**Roster card:**
-```
-┌──────────────────────────────────┐
-│ 🗑️  Duck                         │ ← trash bin icon replaces normal avatar ring
-│     Backend Engineer             │
-│     🗑️ out of den                │
-│                           [Back] │
-└──────────────────────────────────┘
-```
-- Card dims to 50% opacity
-- Trash bin emoji overlaid on avatar (absolute positioned, bottom-right of avatar)
-- Agent name gets a subtle strikethrough
-- Background tint: very faint warm red (#2a1010)
-
-**Roster entry animation on OOO toggle:**
-1. Avatar does a small "dive" animation (translateY +4px then back)
-2. Trash bin icon fades in over the avatar
-3. Card dims
-
-### OOO Auto-Reply (system message)
-
-When an OOO agent is @mentioned, an instant system bot message fires IN #forum:
-
-```
-┌────────────────────────────────────────────────────┐
-│  🤖  GazeBot                                now    │
-│  Heads up — @Duck is out of the den right now.     │
-│  They'll be back when marked available again.       │
-│                                              🗑️     │
-└────────────────────────────────────────────────────┘
+textarea.input {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
 ```
 
-- Message author: "GazeBot" with 🤖 as its avatar
-- Background: slight warm amber tint (--bg-elevated with 10% amber overlay)
-- Border-left: 2px solid --amber-dim
-- Fires immediately, before any agent processing
-- The OOO agent does NOT wake up or respond
+### Cards
 
-### Backend needs (@Duck):
-- `ooo: boolean` field on agents table
-- `PATCH /api/agents/:id` should accept `{ ooo: boolean }`
-- Messages route: when parsing @mentions, check if agent has `ooo: true` — if so, inject a GazeBot system message, do NOT wake the agent
-- GazeBot message: `author_name: "GazeBot"`, `agent_id: null`, `message_type: "system_bot"`, content as above
+```css
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.card-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.card:hover {
+  border-color: var(--border-focus);
+}
+```
+
+### Badges / Pills
+
+```css
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-amber { background: var(--amber-subtle); color: var(--amber); border: 1px solid var(--amber-border); }
+.badge-green { background: var(--success-subtle); color: var(--success); }
+.badge-red   { background: var(--error-subtle); color: var(--error); }
+.badge-gray  { background: rgba(74,85,104,0.15); color: var(--text-muted); }
+.badge-ooo   { background: rgba(107,114,128,0.1); color: var(--status-ooo); border: 1px solid rgba(107,114,128,0.2); }
+```
 
 ---
 
-## Layout: Midnight Den
+## Layout: Obsidian
 
-### Global
-- Soft shadows everywhere (--shadow-sm on cards, --shadow-md on elevated surfaces)
-- Subtle background texture: very faint noise overlay (CSS background-image: url('noise.svg') at 3% opacity)
-- Scrollbars: thin, rounded, amber-tinted on hover
+### App Shell
 
-### Header (52px)
 ```
-🦝 Gaze    📁 ~/my-repo    #forum    🌙 3 agents resting
+┌──────────┬───────────────────────────────────────┬──────────┐
+│ Sidebar  │  Content Area                         │  Panel   │
+│  220px   │  (fills remaining)                    │  280px   │
+└──────────┴───────────────────────────────────────┴──────────┘
 ```
-- Logo: 🦝 emoji + "Gaze" in --amber, font-weight 800
-- Separator: thin vertical lines (--border)
-- Agent count: warm status text, --text-dim
-- Background: --bg-surface, border-bottom 1px --border
+
+```css
+.app-shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg);
+  overflow: hidden;
+}
+.app-sidebar  { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.app-content  { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.app-panel    { width: 280px; flex-shrink: 0; background: var(--surface); border-left: 1px solid var(--border); }
+```
+
+### Header (48px)
+
+```
+[ Gaze raccoon-mark ]  ~/my-project/repo  ·  #forum     [ agents status ]
+```
+
+```css
+.app-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 16px;
+  flex-shrink: 0;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.header-path {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'Geist Mono', monospace;
+  background: var(--elevated);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.header-channel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.header-agents {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+```
+
+### Sidebar — Agent Roster
+
+```
+GAZE
+─────────────────
+#forum
+─────────────────
+AGENTS
+  ○ Atlas
+    Backend  ·  Active
+  ⊘ Nova
+    Frontend  ·  OOO
+  ○ Sentinel
+    QA  ·  Idle
+─────────────────
+[ ▶ Start ] [ ⏹ ]
+```
+
+```css
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 14px 4px;
+}
+.sidebar-agent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+  margin: 1px 6px;
+}
+.sidebar-agent:hover { background: var(--elevated); }
+.sidebar-agent.active { background: var(--amber-subtle); }
+.sidebar-agent-info { flex: 1; min-width: 0; }
+.sidebar-agent-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.sidebar-agent-meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+```
 
 ### Message Feed
-- Background: --bg
-- Message bubbles: NO borders, just warm background on hover (--bg-hover, 200ms transition)
-- Agent name: --amber-soft, font-weight 700
-- Timestamp: --text-muted, font-size --text-xs, inline after name
-- Content: --text, line-height 1.6
 
-**Message bubble entry animation:**
 ```css
-@keyframes message-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.message-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
 }
-.message-bubble {
-  animation: message-in 0.25s ease forwards;
+.message-group {
+  padding: 6px 20px;
+  transition: background 0.1s;
 }
-/* Stagger: nth-child delay for initial load */
-.message-bubble:nth-child(1) { animation-delay: 0ms; }
-.message-bubble:nth-child(2) { animation-delay: 50ms; }
-.message-bubble:nth-child(3) { animation-delay: 100ms; }
+.message-group:hover { background: rgba(30, 35, 48, 0.4); }
+.message-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.message-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  /* Set inline: color: {agent.avatar_color} */
+}
+.message-timestamp {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.message-group:hover .message-timestamp { opacity: 1; }
+.message-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding-left: 44px; /* align with name when avatar is present */
+}
+/* First message in group shows avatar */
+.message-group:first-child .message-avatar,
+.message-group.is-first .message-avatar { display: flex; }
+.message-avatar { width: 34px; flex-shrink: 0; }
 ```
 
-**@mention highlight:**
-- `@Name` → color: --amber-soft, font-weight 600, background: rgba(232,133,10,0.12), border-radius 4px, padding 1px 4px
-
-**System messages (non-GazeBot):**
-- Centered, --text-muted, small, italic
-- Soft amber divider line on each side
-
-**GazeBot messages (OOO replies):**
-- Left-bordered card style (2px --amber-dim), background --bg-elevated
-- 🤖 avatar, "GazeBot" in --text-dim
-
-### Input Bar (60px)
+**Mention highlight:**
+```css
+.mention {
+  background: var(--amber-subtle);
+  color: var(--amber);
+  border-radius: var(--radius-xs);
+  padding: 1px 5px;
+  font-weight: 500;
+  font-size: 13px;
+}
 ```
-🦝  Post to #forum...                          [ Send ]
-```
-- Raccoon emoji on the left as "you" indicator
-- Rounded input (--radius-lg), --bg-input, border 1px --border
-- On focus: border-color --amber, subtle glow (--glow-sm)
-- Send button: --amber background, dark text, --radius-md, font-weight 700
-- Hover: --amber-soft, slight scale(1.02)
 
-### Agent Roster (right panel, 260px)
-- Background: --bg-surface, border-left 1px --border
-- Header: "The Den" (not "Agents") — with a small 🌙 icon
-- Agent cards: padding 12px 14px, --radius-md, hover background --bg-hover
-- Separated by subtle dividers (--border)
-- Start/Stop controls: warm pill buttons at bottom
+**System message:**
+```css
+.system-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.system-message::before,
+.system-message::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+```
+
+**GazeBot OOO message:**
+```css
+.message-gazebot {
+  margin: 4px 20px;
+  padding: 10px 14px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.message-gazebot .gazebot-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+```
+
+### Input Bar (56px)
+
+```css
+.input-bar {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.input-bar-field {
+  flex: 1;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 8px 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  resize: none;
+  max-height: 120px;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.input-bar-field:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+.input-bar-send {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--amber);
+  color: var(--text-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.input-bar-send:hover { background: var(--amber-hover); }
+.input-bar-send:disabled { opacity: 0.3; }
+```
 
 ---
 
-## Config Panel (First-run Wizard)
+## Config Wizard — Obsidian
 
 ### Layout
-- Centered card, max-width 600px, --bg-surface, --shadow-lg, --radius-lg
-- Logo area: big 🦝 emoji + "Welcome to the Den" heading
+Centered, single-column, max-width 600px. Clean form, not a "wizard."
 
-### Form style
-- Labels: --text-dim, font-size --text-sm, font-weight 600, margin-bottom 4px
-- Inputs: --bg-input, --border, --radius-md, focus: --amber glow
-- Textareas: min-height 80px, resize vertical
-
-### Agent cards
-- Background: --bg-elevated, --radius-md, border 1px --border
-- Header: agent raccoon emoji (🦝) + name + role, collapsible
-- Color picker: circular swatch, no border-radius on the picker itself
-
-### AI feature buttons
-**Enhance Prompt:**
-- Small, subtle, right-aligned to textarea label
-- Label: "✦ Enhance" in --amber-dim
-- Loading: gentle spin icon + "enhancing..."
-- Success: brief amber border flash, content swaps with fade
-
-**Generate from Repo:**
-- Prominent secondary button in the empty state
-- Icon: 🔍 + "Analyze repo and suggest agents"
-- Loading: "Reading your codebase..." with soft pulse
-
-### Launch button
-- Full-width, --amber background, dark text (#0e1015), font-weight 800, --radius-md
-- Hover: scale(1.01) + --amber-soft background
-- Loading: "Setting up the den..."
-
----
-
-## Animations Summary
+### Logo Area
+```
+    [raccoon SVG logomark, 48px]
+    Gaze
+    Set up your workspace
+```
 
 ```css
-/* Message in */
-@keyframes message-in { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+.wizard-logo-area {
+  text-align: center;
+  padding: 40px 0 32px;
+}
+.wizard-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  margin-top: 12px;
+}
+.wizard-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+```
 
-/* Agent wake (when @tagged) */
-@keyframes agent-wake { 0% { transform:scale(0.95) } 50% { transform:scale(1.05) } 100% { transform:scale(1) } }
+### Agent Cards
+```css
+.agent-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.agent-card:focus-within { border-color: var(--border-focus); }
+.agent-card.error { border-color: var(--error); }
+.agent-card-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--elevated);
+}
+.agent-card-body { padding: 16px; }
+```
 
-/* OOO dive */
-@keyframes ooo-dive { 0% { transform:translateY(0) } 40% { transform:translateY(4px) } 100% { transform:translateY(0) } }
-
-/* Thinking wobble */
-@keyframes thinking { 0%,100% { transform:rotate(-1deg) } 50% { transform:rotate(1deg) } }
-
-/* Breathing (sleeping) */
-@keyframes breathe { 0%,100% { opacity:0.55 } 50% { opacity:0.75 } }
-
-/* Loading pulse */
-@keyframes pulse { 0%,100% { opacity:0.5 } 50% { opacity:1 } }
+### AI Buttons
+```css
+.btn-enhance {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--amber);
+  background: transparent;
+  border: none;
+  padding: 3px 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.btn-enhance:hover { opacity: 1; }
+.btn-enhance.loading { opacity: 0.4; }
 ```
 
 ---
 
-## Component Map (unchanged structure, new styles)
+## OOO Feature — Obsidian Expression
 
-All existing components keep their structure. Only CSS changes:
+**No trash bins. No emoji.** The agent simply has an "Unavailable" state.
 
+**Agent card when OOO:**
+- Avatar: grayscale filter applied
+- Name: normal color but followed by `OOO` badge (gray pill)
+- Status row: "Unavailable" in --text-muted
+- Sidebar entry dims to 50% opacity
+
+**Toggle:**
+- In the agent card action menu (Radix DropdownMenu, accessed via the `⋯` icon on hover)
+- Options: "Mark Unavailable" / "Mark Available"
+
+**GazeBot message when OOO agent is @tagged:**
 ```
-src/
-├── App.css              ← full token replacement (this spec)
-├── index.css            ← reset + font import
-└── components/
-    ├── ConfigWizard.tsx  ← update inline styles to Midnight Den tokens
-    ├── Forum.tsx         ← update header + layout styles
-    ├── MessageBubble.tsx ← update bubble + mention styles
-    ├── InputBar.tsx      ← update to warm rounded style
-    ├── AgentList.tsx     ← update to "The Den" panel, add OOO toggle
-    ├── AgentActivityCard ← update colors to warm palette
-    └── [all others]      ← update CSS vars to new tokens
+GAZE  ·  now
+Atlas is currently unavailable. You'll need to @mention them
+again when they're back online.
+```
+- Styled as `.message-gazebot` — amber left border, elevated background, no emoji
+
+---
+
+## Agent Activity Panel
+
+```css
+.activity-panel {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.activity-card {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+}
+.activity-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.activity-line {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  font-family: 'Geist Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-line .activity-type {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  width: 48px;
+}
+.activity-line .activity-file { color: var(--text-primary); }
+.activity-line .activity-tool { color: var(--amber); }
 ```
 
 ---
 
-## What Changes vs Terminal CLI
+## Animations (Framer Motion)
 
-| Was | Now |
+```tsx
+// Message entry
+const messageVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } }
+};
+
+// Agent card slide in
+const agentCardVariants = {
+  initial: { opacity: 0, x: -12 },
+  animate: (i: number) => ({
+    opacity: 1, x: 0,
+    transition: { delay: i * 0.06, duration: 0.25, ease: 'easeOut' }
+  })
+};
+
+// Panel entrance
+const panelVariants = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } },
+  exit:    { opacity: 0, x: 24, transition: { duration: 0.15 } }
+};
+
+// Status ring pulse
+const ringPulse = {
+  scale: [1, 1.04, 1],
+  transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' }
+};
+```
+
+---
+
+## What Changes from Midnight Den
+
+| Midnight Den | Obsidian |
 |---|---|
-| `#0a0a0a` pure black | `#0e1015` forest night |
-| `#33ff00` phosphor green | `#e8850a` amber + `#f0e8d8` cream |
-| Monospace (JetBrains) | Rounded sans-serif (Nunito) |
-| `border-radius: 0` | `border-radius: 6-16px` |
-| ASCII spinners, `[OK]`, `[ERR]` | Emoji + natural language |
-| Text glow effects | Box shadows + warm glows |
-| CRT scanlines | Subtle noise texture |
-| Letter initial avatars | 🦝 raccoon emoji avatars |
-| Status: `[IDLE]` `[····]` | Status: `🌙 resting` `💭 thinking...` |
+| Raccoon emoji avatars 🦝 | Letterform avatars with gradient rings |
+| Emoji status indicators | Precise dots + text labels |
+| OOO → trash bin emoji | OOO → grayscale + 'Unavailable' badge |
+| Nunito (rounded) | Inter (neutral, production-grade) |
+| Amber used everywhere | Amber used sparingly (CTAs + active states only) |
+| Warm cozy aesthetic | Clean, confident, market-ready |
+| No animation library | Framer Motion for all transitions |
+| No icon system | Lucide icons throughout |
+| No Radix | Radix primitives for menus/tooltips |
+| GazeBot with 🤖 emoji | GazeBot: clean card with GAZE label |
+
+---
+
+## Raccoon Logomark
+
+The raccoon is expressed as a minimal geometric SVG — two triangular ears, an oval face, two black oval eye patches (the raccoon mask). Clean, modern, recognizable. No cartoon elements.
+
+```svg
+<!-- Placeholder — commission or generate a proper geometric raccoon mark -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <!-- Ears -->
+  <path d="M8 4 L4 12 L12 12 Z" fill="#E8EDF2"/>
+  <path d="M24 4 L20 12 L28 12 Z" fill="#E8EDF2"/>
+  <!-- Face -->
+  <ellipse cx="16" cy="20" rx="11" ry="10" fill="#E8EDF2"/>
+  <!-- Mask patches -->
+  <ellipse cx="11" cy="19" rx="4" ry="3.5" fill="#1C2030"/>
+  <ellipse cx="21" cy="19" rx="4" ry="3.5" fill="#1C2030"/>
+  <!-- Eyes -->
+  <circle cx="11" cy="19" r="1.5" fill="#F59E0B"/>
+  <circle cx="21" cy="19" r="1.5" fill="#F59E0B"/>
+  <!-- Nose -->
+  <ellipse cx="16" cy="24" rx="2" ry="1.2" fill="#1C2030"/>
+</svg>
+```
+
+---
+
+## Package Versions
+
+```json
+{
+  "framer-motion": "^11.0.0",
+  "@radix-ui/react-tooltip": "^1.1.0",
+  "@radix-ui/react-dropdown-menu": "^2.1.0",
+  "lucide-react": "^0.400.0"
+}
+```

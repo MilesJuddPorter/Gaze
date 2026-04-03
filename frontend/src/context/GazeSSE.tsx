@@ -87,11 +87,15 @@ export function GazeSSEProvider({ children }: { children: React.ReactNode }) {
       // Agent status update
       es.addEventListener("agent_status", (e) => {
         try {
-          const { agentId, status, action } = JSON.parse(e.data);
+          const { agentId, status, action, is_ooo } = JSON.parse(e.data);
           setAgents((prev) =>
-            prev.map((a) =>
-              a.id === agentId ? { ...a, status, current_action: action } : a
-            )
+            prev.map((a) => {
+              if (a.id !== agentId) return a;
+              const updates: Partial<typeof a> = {};
+              if (status !== undefined) { updates.status = status; updates.current_action = action; }
+              if (is_ooo !== undefined) updates.is_ooo = is_ooo;
+              return { ...a, ...updates };
+            })
           );
         } catch { /* ignore */ }
       });
