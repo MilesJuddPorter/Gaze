@@ -2,12 +2,12 @@ import { FastifyInstance } from "fastify";
 import {
   getMessages,
   postMessage,
+  getAllAgents,
   toggleReaction,
   getReactionsForMessages,
   type Message,
 } from "../database.js";
 import { wakeAgent } from "../agentLoop.js";
-import { getAllAgents } from "../database.js";
 
 export async function messageRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/messages
@@ -48,10 +48,22 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
     });
 
     // Wake only @mentioned agents — mention-only mode
+    // OOO agents get an instant bot reply instead of waking
     const agents = getAllAgents();
     const mentionedNames = (content.match(/@(\w+)/g) ?? []).map((m) => m.slice(1).toLowerCase());
     for (const agent of agents) {
-      if (mentionedNames.includes(agent.name.toLowerCase())) {
+      if (!mentionedNames.includes(agent.name.toLowerCase())) continue;
+
+      if (agent.is_ooo) {
+        // Fire instant OOO bot message
+        const oooMsg = postMessage(
+          "RaccoonBot",
+          `🤖 **${agent.name}** is out of the den right now — they jumped in the trash bin. They'll be back when you take them off OOO.`,
+          null,
+          "system"
+        );
+        app.sseClients?.forEach((send) => send("message", { ...oooMsg, reactions: [] }));
+      } else {
         wakeAgent(agent.id);
       }
     }

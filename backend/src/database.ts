@@ -12,6 +12,7 @@ export interface Agent {
   current_action: string | null;
   check_interval: number;
   last_read_at: string;
+  is_ooo: number; // 0 = active, 1 = OOO (in the trash bin)
   created_at: string;
 }
 
@@ -48,6 +49,17 @@ export function initDatabase(dir: string): void {
   db.pragma("foreign_keys = ON");
 
   createTables();
+  migrateDatabase();
+}
+
+function migrateDatabase(): void {
+  const d = getDb();
+  // Add is_ooo column if it doesn't exist (migration for existing DBs)
+  try {
+    d.prepare("SELECT is_ooo FROM agents LIMIT 1").get();
+  } catch {
+    d.prepare("ALTER TABLE agents ADD COLUMN is_ooo INTEGER NOT NULL DEFAULT 0").run();
+  }
 }
 
 function getDb(): Database.Database {
@@ -69,6 +81,7 @@ function createTables(): void {
       current_action TEXT,
       check_interval INTEGER DEFAULT 300,
       last_read_at DATETIME DEFAULT '1970-01-01',
+      is_ooo INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -359,6 +372,10 @@ export function logActivity(entry: {
       SELECT id FROM agent_activity WHERE agent_id = ? ORDER BY id DESC LIMIT 20
     )
   `).run(entry.agent_id, entry.agent_id);
+}
+
+export function setAgentOoo(agentId: number, isOoo: boolean): void {
+  getDb().prepare("UPDATE agents SET is_ooo = ? WHERE id = ?").run(isOoo ? 1 : 0, agentId);
 }
 
 export function getAgentActivity(agentId: number, limit = 20): ActivityEntry[] {

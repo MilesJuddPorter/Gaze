@@ -8,6 +8,7 @@ import {
   updateAgent,
   deleteAgent,
   getAgentActivity,
+  setAgentOoo,
 } from "../database.js";
 import {
   startAgent,
@@ -47,6 +48,28 @@ export async function agentRoutes(app: FastifyInstance, opts: { gazeDir?: string
     startAgent(id);
     return { ok: true, agentId: id };
   });
+
+  // PATCH /api/agents/:id/ooo — toggle OOO (in the trash bin) status
+  app.patch<{ Params: { id: string }; Body: { is_ooo: boolean } }>(
+    "/api/agents/:id/ooo",
+    async (request, reply) => {
+      const id = parseInt(request.params.id);
+      const agent = getAgent(id);
+      if (!agent) return reply.code(404).send({ error: "Agent not found" });
+      setAgentOoo(id, request.body.is_ooo);
+      const updated = getAgent(id);
+      // Broadcast the status change via SSE
+      app.sseClients?.forEach((send) => {
+        send("agent_status", {
+          agentId: id,
+          status: updated?.status ?? "idle",
+          action: updated?.current_action ?? null,
+          is_ooo: updated?.is_ooo ?? 0,
+        });
+      });
+      return updated;
+    }
+  );
 
 
   // GET /api/agents

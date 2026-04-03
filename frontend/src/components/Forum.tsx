@@ -3,6 +3,7 @@ import type { Message, Agent } from "../types";
 import ForumFeed from "./ForumFeed";
 import AgentActivityBoard from "./AgentActivityBoard";
 import InputBar from "./InputBar";
+import DmPanel from "./DmPanel";
 import { useGazeSSE } from "../context/GazeSSE";
 
 interface Props {
@@ -14,6 +15,7 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
   // Pull messages + agents from the shared SSE context (single connection)
   const { messages, agents, setAgents } = useGazeSSE();
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [dmPanelOpen, setDmPanelOpen] = useState(false);
 
   // Load initial history from REST on mount (SSE only delivers new events)
   useEffect(() => {
@@ -83,6 +85,9 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
         </div>
         <AgentActivityBoard agents={agents} onStart={handleStart} onStop={handleStop} />
       </div>
+
+      {/* DM threads panel — below the main body, collapsible */}
+      <DmPanel isOpen={dmPanelOpen} onToggle={() => setDmPanelOpen((o) => !o)} />
     </div>
   );
 }

@@ -44,6 +44,8 @@ interface GazeSSEContextValue {
   onToolEnd: (handler: (e: ToolEndEvent) => void) => () => void;
   /** Subscribe to agent_activity events. Returns unsubscribe fn. */
   onAgentActivity: (handler: (e: AgentActivityEvent) => void) => () => void;
+  /** Subscribe to dm_message events (agent-to-agent DMs). Returns unsubscribe fn. */
+  onDmMessage: (handler: (e: Record<string, unknown>) => void) => () => void;
   connected: boolean;
 }
 
@@ -60,6 +62,7 @@ export function GazeSSEProvider({ children }: { children: React.ReactNode }) {
   const toolStartHandlers = useRef<Set<(e: ToolStartEvent) => void>>(new Set());
   const toolEndHandlers = useRef<Set<(e: ToolEndEvent) => void>>(new Set());
   const agentActivityHandlers = useRef<Set<(e: AgentActivityEvent) => void>>(new Set());
+  const dmMessageHandlers = useRef<Set<(e: Record<string, unknown>) => void>>(new Set());
 
   // Single SSE connection, with reconnect on error
   useEffect(() => {
@@ -115,6 +118,13 @@ export function GazeSSEProvider({ children }: { children: React.ReactNode }) {
         } catch { /* ignore */ }
       });
 
+      es.addEventListener("dm_message", (e) => {
+        try {
+          const data = JSON.parse(e.data) as Record<string, unknown>;
+          dmMessageHandlers.current.forEach((h) => h(data));
+        } catch { /* ignore */ }
+      });
+
       es.onerror = () => {
         setConnected(false);
         es.close();
@@ -145,9 +155,14 @@ export function GazeSSEProvider({ children }: { children: React.ReactNode }) {
     return () => agentActivityHandlers.current.delete(handler);
   };
 
+  const onDmMessage = (handler: (e: Record<string, unknown>) => void) => {
+    dmMessageHandlers.current.add(handler);
+    return () => dmMessageHandlers.current.delete(handler);
+  };
+
   return (
     <GazeSSEContext.Provider
-      value={{ messages, agents, setAgents, onToolStart, onToolEnd, onAgentActivity, connected }}
+      value={{ messages, agents, setAgents, onToolStart, onToolEnd, onAgentActivity, onDmMessage, connected }}
     >
       {children}
     </GazeSSEContext.Provider>
