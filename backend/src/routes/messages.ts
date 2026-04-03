@@ -57,10 +57,10 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
       if (agent.is_ooo) {
         // Fire instant OOO bot message
         const oooMsg = postMessage(
-          "RaccoonBot",
-          `🤖 **${agent.name}** is out of the den right now — they jumped in the trash bin. They'll be back when you take them off OOO.`,
+          "GazeBot",
+          `Heads up — **@${agent.name}** is out of the den right now. They'll be back when marked available again. 🗑️`,
           null,
-          "system"
+          "system_bot"
         );
         app.sseClients?.forEach((send) => send("message", { ...oooMsg, reactions: [] }));
       } else {
