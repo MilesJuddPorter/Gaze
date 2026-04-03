@@ -131,7 +131,8 @@ Return ONLY valid JSON in this exact format:
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) return reply.code(500).send({ error: "Failed to parse agent suggestions" });
       const suggestions = JSON.parse(jsonMatch[0]);
-      return suggestions;
+      // Return both the full config shape and a top-level agents array for easy consumption
+      return { agents: suggestions.agents ?? [], workspace_name: suggestions.workspace_name ?? "", ...suggestions };
     } catch {
       return reply.code(500).send({ error: "Failed to parse agent suggestions", raw: text.slice(0, 200) });
     }
@@ -164,7 +165,7 @@ Return ONLY the expanded system prompt text — no JSON, no preamble, no quotes.
       });
 
       const enhanced = response.content[0].type === "text" ? response.content[0].text.trim() : seed;
-      return { enhanced };
+      return { prompt: enhanced, enhanced }; // both keys for compatibility
     }
   );
 }
