@@ -13,6 +13,7 @@ interface DmMessage {
   sender_id: number | null;
   content: string;
   timestamp: string;
+  channel_id?: number;
 }
 
 interface DmThread {
@@ -38,7 +39,7 @@ export default function DmPanel({ isOpen, onToggle }: Props) {
   const feedRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to dm_message events from shared SSE context
-  const { onToolStart } = useGazeSSE(); // We need a generic event hook — use a workaround below
+  const { onDmMessage } = useGazeSSE();
 
   // Fetch threads on open
   useEffect(() => {
@@ -69,7 +70,36 @@ export default function DmPanel({ isOpen, onToggle }: Props) {
     }
   }, [threadMessages]);
 
-  // Poll for new DM threads and messages (simple approach — SSE event handled separately)
+  // Wire onDmMessage SSE events for real-time DM updates
+  useEffect(() => {
+    const unsub = onDmMessage((event) => {
+      const { channel_id, content, sender_name, timestamp } = event as Record<string, unknown>;
+      const channelId = channel_id as number;
+      // If this DM is for the active thread, append it
+      if (activeThread?.id === channelId) {
+        const newMsg: DmMessage = {
+          id: Date.now(),
+          content: content as string,
+          sender_name: (sender_name as string) ?? "agent",
+          sender_id: null,
+          timestamp: (timestamp as string) ?? new Date().toISOString(),
+        };
+        setThreadMessages((prev) => [...prev, newMsg]);
+        setUnreadCounts((prev) => ({ ...prev, [channelId]: 0 }));
+      } else {
+        // Increment unread for background threads
+        setUnreadCounts((prev) => ({ ...prev, [channelId]: (prev[channelId] ?? 0) + 1 }));
+      }
+      // Refresh thread list to update last_message preview
+      fetch("/api/dms")
+        .then((r) => r.json())
+        .then((data: DmThread[]) => { if (Array.isArray(data)) setThreads(data); })
+        .catch(console.error);
+    });
+    return unsub;
+  }, [onDmMessage, activeThread?.id]);
+
+  // Poll for new DM threads and messages (fallback — SSE handles live updates)
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
@@ -153,7 +183,7 @@ export default function DmPanel({ isOpen, onToggle }: Props) {
                     style={{
                       ...S.threadRow,
                       background: isActive ? "rgba(51,255,0,0.06)" : "transparent",
-                      borderLeft: isActive ? "2px solid var(--green)" : "2px solid transparent",
+                      borderLeft: isActive ? "2px solid var(--amber)" : "2px solid transparent",
                     }}
                     onClick={() => setActiveThread(isActive ? null : thread)}
                   >
@@ -213,7 +243,7 @@ export default function DmPanel({ isOpen, onToggle }: Props) {
                           ? activeThread.agent1
                           : activeThread.agent2)
                       : null;
-                    const color = agent?.avatar_color ?? "var(--green)";
+                    const color = agent?.avatar_color ?? "var(--amber)";
                     return (
                       <div key={msg.id} style={S.msgRow}>
                         {isHuman ? (
@@ -281,7 +311,7 @@ const S: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "none",
     cursor: "pointer",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
   },
   toggleLabel: {
     fontSize: "11px",
@@ -348,7 +378,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   threadNames: {
     fontSize: "11px",
-    color: "var(--green)",
+    color: "var(--amber)",
     textShadow: "none",
     fontWeight: 700,
     letterSpacing: "0.04em",
@@ -390,7 +420,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   threadHeaderNames: {
     fontSize: "11px",
-    color: "var(--green)",
+    color: "var(--amber)",
     textShadow: "var(--glow)",
     letterSpacing: "0.06em",
   },
@@ -413,16 +443,16 @@ const S: Record<string, React.CSSProperties> = {
   msgRow: {},
   humanMsg: {
     fontSize: "12px",
-    color: "var(--green)",
+    color: "var(--amber)",
     textShadow: "var(--glow)",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
   },
   msgPrompt: {
     color: "var(--muted)",
     textShadow: "none",
   },
   agentMsg: {
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
   },
   msgName: {
     fontSize: "11px",
@@ -437,7 +467,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   msgContent: {
     fontSize: "12px",
-    color: "var(--green)",
+    color: "var(--amber)",
     textShadow: "var(--glow)",
     marginTop: "1px",
     paddingLeft: "4px",
@@ -461,17 +491,17 @@ const S: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "none",
     outline: "none",
-    color: "var(--green)",
-    fontFamily: "'JetBrains Mono', monospace",
+    color: "var(--amber)",
+    fontFamily: "'Inter', sans-serif",
     fontSize: "12px",
     textShadow: "var(--glow)",
-    caretColor: "var(--green)",
+    caretColor: "var(--amber)",
   },
   sendBtn: {
     background: "transparent",
-    border: "1px solid var(--green)",
-    color: "var(--green)",
-    fontFamily: "'JetBrains Mono', monospace",
+    border: "1px solid var(--amber)",
+    color: "var(--amber)",
+    fontFamily: "'Inter', sans-serif",
     fontSize: "10px",
     padding: "2px 8px",
     cursor: "pointer",

@@ -24,7 +24,7 @@ function formatTime(ts: string): string {
 
 export default function AgentDeepDive({ agent, onClose }: Props) {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const nameColor = agent.avatar_color ?? "#33ff00";
+  const nameColor = agent.avatar_color ?? "var(--amber)";
   const nameGlow = `0 0 6px ${nameColor}80`;
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function AgentDeepDive({ agent, onClose }: Props) {
               <div style={S.emptyLog}>// no activity recorded yet</div>
             )}
             {activity.map((entry) => {
-              const statusColor = entry.status === "error" ? "#ff3333" : "#33ff00";
+              const statusColor = entry.status === "error" ? "var(--error)" : "var(--amber)";
               return (
                 <div key={entry.id} style={S.logRow}>
                   <span style={S.logTime}>{formatTime(entry.timestamp)}</span>
@@ -100,7 +100,7 @@ const S: Record<string, React.CSSProperties> = {
   panel: {
     flex: 1, display: "flex", flexDirection: "column" as const,
     overflow: "hidden",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
   },
   header: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -114,7 +114,7 @@ const S: Record<string, React.CSSProperties> = {
   headerRight: { display: "flex", alignItems: "center", gap: "12px" },
   statusStr: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
   closeBtn: {
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
     padding: "4px 10px", background: "transparent",
     border: "1px solid #1f521f", color: "#1f521f",
     fontSize: "11px", cursor: "pointer",
@@ -123,12 +123,12 @@ const S: Record<string, React.CSSProperties> = {
   section: { padding: "10px 14px", flexShrink: 0 },
   sectionTitle: { fontSize: "11px", color: "#1f521f", letterSpacing: "0.1em", textShadow: "none", marginBottom: "4px" },
   divider: { height: "1px", background: "#1f521f", marginBottom: "8px" },
-  currentAction: { fontSize: "13px", color: "#33ff00", textShadow: "0 0 4px rgba(51,255,0,0.4)" },
+  currentAction: { fontSize: "13px", color: "var(--amber)", textShadow: "none" },
   logList: { flex: 1, overflowY: "auto" as const, padding: "0 14px 14px" },
   emptyLog: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
   logRow: { display: "flex", gap: "8px", fontSize: "11px", lineHeight: 1.6, borderBottom: "1px solid #0a0a0a" },
   logTime: { color: "#1f521f", flexShrink: 0, textShadow: "none" },
   logTool: { color: "#ffb000", flexShrink: 0, textShadow: "none" },
-  logDesc: { color: "#33ff00", flex: 1, textShadow: "0 0 3px rgba(51,255,0,0.2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
+  logDesc: { color: "var(--amber)", flex: 1, textShadow: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   logStatus: { flexShrink: 0, fontWeight: 700 },
 };

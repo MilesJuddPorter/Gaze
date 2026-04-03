@@ -38,16 +38,25 @@ export default function ForumFeed({ messages, agents }: Props) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: "12px",
-          padding: "60px 20px",
-          color: "var(--text-muted)",
+          gap: "10px",
+          padding: "80px 20px",
         }}>
-          <span style={{ fontSize: "48px" }}>🦝</span>
-          <div style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--text-dim)" }}>
-            The den is quiet
+          {/* Geometric raccoon logomark */}
+          <svg width="40" height="40" viewBox="0 0 32 32" fill="none" style={{ opacity: 0.3 }}>
+            <path d="M8 4 L4 12 L12 12 Z" fill="var(--text-secondary)"/>
+            <path d="M24 4 L20 12 L28 12 Z" fill="var(--text-secondary)"/>
+            <ellipse cx="16" cy="20" rx="11" ry="10" fill="var(--text-secondary)"/>
+            <ellipse cx="11" cy="19" rx="4" ry="3.5" fill="var(--elevated)"/>
+            <ellipse cx="21" cy="19" rx="4" ry="3.5" fill="var(--elevated)"/>
+            <circle cx="11" cy="19" r="1.5" fill="var(--amber)"/>
+            <circle cx="21" cy="19" r="1.5" fill="var(--amber)"/>
+            <ellipse cx="16" cy="24" rx="2" ry="1.2" fill="var(--elevated)"/>
+          </svg>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>
+            No messages yet
           </div>
-          <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", textAlign: "center" }}>
-            Send a message below. @mention an agent to wake them up.
+          <div style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center" }}>
+            Send a message below. @mention an agent to wake them.
           </div>
         </div>
       )}
@@ -61,7 +70,7 @@ export default function ForumFeed({ messages, agents }: Props) {
         />
       ))}
 
-      <div ref={bottomRef} style={{ height: "8px" }} />
+      <div ref={bottomRef} style={{ height: "12px" }} />
     </div>
   );
 }

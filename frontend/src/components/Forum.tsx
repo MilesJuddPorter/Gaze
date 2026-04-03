@@ -77,13 +77,27 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
     <div className="forum-root">
       {/* Header */}
       <div className="forum-header">
-        <div className="forum-header-logo">🦝 {workspaceName}</div>
+        <div className="forum-header-logo">
+          <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+            <path d="M8 4 L4 12 L12 12 Z" fill="var(--text-primary)"/>
+            <path d="M24 4 L20 12 L28 12 Z" fill="var(--text-primary)"/>
+            <ellipse cx="16" cy="20" rx="11" ry="10" fill="var(--text-primary)"/>
+            <ellipse cx="11" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+            <ellipse cx="21" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+            <circle cx="11" cy="19" r="1.5" fill="var(--amber)"/>
+            <circle cx="21" cy="19" r="1.5" fill="var(--amber)"/>
+            <ellipse cx="16" cy="24" rx="2" ry="1.2" fill="var(--bg)"/>
+          </svg>
+          {workspaceName}
+        </div>
         <div className="forum-header-sep" />
-        <span className="forum-header-path">📁 {repoPath}</span>
+        <span className="forum-header-path">{repoPath}</span>
         <div className="forum-header-sep" />
         <span className="forum-header-channel">#forum</span>
-        <div className="forum-header-sep" />
-        <span className="forum-header-status">{statusText}</span>
+        <div className="forum-header-status">
+          <div className={`status-dot ${activeCount > 0 ? "active" : "idle"}`} />
+          {statusText}
+        </div>
       </div>
 
       {/* Body */}

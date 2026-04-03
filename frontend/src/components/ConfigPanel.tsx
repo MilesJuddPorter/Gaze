@@ -256,7 +256,7 @@ export default function ConfigPanel({ onInit }: Props) {
         .field-group textarea {
           background: var(--bg-pane);
           border: 1px solid var(--border);
-          border-radius: 0;
+          border-radius: var(--radius-md);
           padding: 8px 10px;
           color: var(--text);
           font-size: 14px;
@@ -265,7 +265,7 @@ export default function ConfigPanel({ onInit }: Props) {
 
         .field-group input:focus,
         .field-group textarea:focus {
-          border-color: #33ff00;
+          border-color: var(--amber);
           outline: none;
         }
 
@@ -293,10 +293,10 @@ export default function ConfigPanel({ onInit }: Props) {
 
         .add-agent-btn {
           font-size: 12px;
-          color: #33ff00;
+          color: var(--amber);
           padding: 4px 10px;
-          border: 1px solid #33ff00;
-          border-radius: 0;
+          border: 1px solid var(--amber);
+          border-radius: var(--radius-md);
           transition: background 0.15s;
           text-transform: none;
           letter-spacing: 0;
@@ -316,7 +316,7 @@ export default function ConfigPanel({ onInit }: Props) {
         .agent-card {
           background: var(--bg-pane);
           border: 1px solid var(--border);
-          border-radius: 0;
+          border-radius: var(--radius-md);
           padding: 14px;
           display: flex;
           flex-direction: column;
@@ -333,7 +333,7 @@ export default function ConfigPanel({ onInit }: Props) {
         .agent-avatar-preview {
           width: 28px;
           height: 28px;
-          border-radius: 0;
+          border-radius: var(--radius-md);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -356,7 +356,7 @@ export default function ConfigPanel({ onInit }: Props) {
           line-height: 1;
           width: 24px;
           height: 24px;
-          border-radius: 0;
+          border-radius: var(--radius-md);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -376,7 +376,7 @@ export default function ConfigPanel({ onInit }: Props) {
         .color-swatch {
           width: 22px;
           height: 22px;
-          border-radius: 0;
+          border-radius: var(--radius-md);
           border: 2px solid transparent;
           transition: transform 0.1s, border-color 0.1s;
         }
@@ -399,15 +399,15 @@ export default function ConfigPanel({ onInit }: Props) {
           border: 1px solid rgba(239, 68, 68, 0.3);
           color: #ef4444;
           padding: 10px 14px;
-          border-radius: 0;
+          border-radius: var(--radius-md);
           font-size: 13px;
         }
 
         .launch-btn {
-          background: #33ff00;
+          background: var(--amber);
           color: #fff;
           padding: 12px 24px;
-          border-radius: 0;
+          border-radius: var(--radius-md);
           font-size: 15px;
           font-weight: 600;
           transition: background 0.15s, opacity 0.15s;

@@ -7,7 +7,7 @@ const DEFAULT_AGENTS: AgentConfig[] = [
     role: "Scrum Master",
     system_prompt:
       "You are Frog, Scrum Master at a startup led by Miles (CEO). You keep the team moving, break ambiguous requests into actionable tickets, and ensure nobody is waiting on information they need. 2-4 sentences per message. No filler.",
-    avatar_color: "#33ff00",
+    avatar_color: "#F59E0B",
     check_interval: 5,
   },
   {
@@ -118,7 +118,7 @@ export default function ConfigWizard({ onComplete }: Props) {
     const newIdx = agents.length;
     setAgents((prev) => [
       ...prev,
-      { name: "", role: "", system_prompt: "", avatar_color: "#33ff00", check_interval: 30 },
+      { name: "", role: "", system_prompt: "", avatar_color: "#F59E0B", check_interval: 30 },
     ]);
     setTimeout(() => setVisibleAgents((prev) => ({ ...prev, [newIdx]: true })), 50);
   };
@@ -155,11 +155,11 @@ export default function ConfigWizard({ onComplete }: Props) {
 
     agents.forEach((a, i) => {
       const e: FieldErrors = {};
-      if (!a.name.trim()) { e.name = "[ERR] agent requires a name"; valid = false; }
-      else if (names.has(a.name.toLowerCase())) { e.name = "[ERR] duplicate agent name"; valid = false; }
+      if (!a.name.trim()) { e.name = "Agent needs a name"; valid = false; }
+      else if (names.has(a.name.toLowerCase())) { e.name = "Name already taken"; valid = false; }
       else names.add(a.name.toLowerCase());
-      if (!a.role.trim()) { e.role = "[ERR] role is required"; valid = false; }
-      if (!a.system_prompt.trim()) { e.system_prompt = "[ERR] system prompt is required"; valid = false; }
+      if (!a.role.trim()) { e.role = "What does this agent do?"; valid = false; }
+      if (!a.system_prompt.trim()) { e.system_prompt = "Give your agent some instructions"; valid = false; }
       if (Object.keys(e).length) errors[i] = e;
     });
 
@@ -169,11 +169,11 @@ export default function ConfigWizard({ onComplete }: Props) {
 
   const handleSubmit = async () => {
     if (agents.length === 0) {
-      setFormError("[ERR] at least one agent is required to launch");
+      setFormError("Add at least one agent to continue");
       return;
     }
     if (!validate()) {
-      setFormError("[ERR] fix highlighted fields before launching");
+      setFormError("Fix the highlighted issues before launching");
       return;
     }
 
@@ -240,7 +240,7 @@ export default function ConfigWizard({ onComplete }: Props) {
     return (
       <div style={S.screen}>
         <div style={S.initBox}>
-          <div style={S.initTitle}>INITIALIZING GAZE</div>
+          <div style={S.initTitle}>Setting up Gaze</div>
           <div style={S.initDivider}>{'═'.repeat(40)}</div>
           {initLog.map((line, i) => (
             <div
@@ -269,48 +269,44 @@ export default function ConfigWizard({ onComplete }: Props) {
   return (
     <div style={S.screen}>
       <div style={S.container}>
-        {/* ASCII Header */}
-        <div style={S.logo}>
-          <pre style={S.ascii}>{`
-  ___   _   ____________
- / _ \\ / | / /_  __/ __ \\
-/ /_\\ \\/  |/ / / / / / / /
-\\_, //_/|_/ /_/ /_/ /_/
-/_/
-`}</pre>
-          <div style={S.subtitle}>
-            {"// WORKSPACE INIT  //  NO .GAZE FOUND"}
+        {/* Obsidian logomark + title */}
+        <div className="config-logo-area">
+          <div className="config-logo-mark">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <path d="M8 4 L4 12 L12 12 Z" fill="var(--text-primary)"/>
+              <path d="M24 4 L20 12 L28 12 Z" fill="var(--text-primary)"/>
+              <ellipse cx="16" cy="20" rx="11" ry="10" fill="var(--text-primary)"/>
+              <ellipse cx="11" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+              <ellipse cx="21" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+              <circle cx="11" cy="19" r="1.5" fill="var(--amber)"/>
+              <circle cx="21" cy="19" r="1.5" fill="var(--amber)"/>
+              <ellipse cx="16" cy="24" rx="2" ry="1.2" fill="var(--bg)"/>
+            </svg>
+            <span className="config-logo-title">Gaze</span>
           </div>
+          <span className="config-logo-sub">Set up your workspace</span>
         </div>
 
-        <div style={S.divider}>{'═'.repeat(50)}</div>
-
-        {/* AI Generate from Repo — always visible but primary in empty state */}
-        <div style={{ ...S.generateRow, opacity: agents.length > 0 ? 0.6 : 1 }}>
-          <span style={S.generateHint}>
-            {agents.length === 0
-              ? "// analyze this repo and suggest agents:"
-              : "// regenerate agents from repo:"}
+        {/* AI Generate from Repo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            {agents.length === 0 ? "Not sure where to start?" : "Replace with AI-suggested agents:"}
           </span>
           <button
-            style={{
-              ...S.generateBtn,
-              opacity: generating ? 0.5 : 1,
-              cursor: generating ? "not-allowed" : "pointer",
-            }}
+            className="btn btn-secondary btn-sm"
+            style={{ opacity: generating ? 0.5 : 1 }}
             onClick={generateFromRepo}
             disabled={generating}
-            title="Reads your repo structure and suggests an AI agent team"
           >
-            {generating ? "🔍 Reading your repo..." : "🔍 Analyze repo and suggest agents"}
+            {generating ? "Analyzing repo..." : "Suggest agents from repo"}
           </button>
         </div>
 
         {/* Workspace Name */}
         <div style={S.section}>
-          <div style={S.sectionLabel}>{"// WORKSPACE"}</div>
+          <div style={S.sectionLabel}>{"Workspace"}</div>
           <div className="field-group">
-            <span className="field-prompt">{"name >"}</span>
+            <span className="field-prompt">{""}</span>
             <input
               className="field-input"
               value={workspaceName}
@@ -320,17 +316,17 @@ export default function ConfigWizard({ onComplete }: Props) {
           </div>
         </div>
 
-        <div style={S.divider}>{'─'.repeat(50)}</div>
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
 
         {/* Agents */}
         <div style={S.section}>
-          <div style={S.sectionLabel}>{"// AGENTS"}</div>
+          <div style={S.sectionLabel}>{"Agents"}</div>
 
           {agents.length === 0 && (
             <div style={S.emptyPane}>
               <div style={S.emptyPlus}>+</div>
-              <div style={S.emptyLabel}>ADD FIRST AGENT</div>
-              <div style={S.emptyHint}>at least one agent required to proceed</div>
+              <div style={S.emptyLabel}>Add your first agent</div>
+              <div style={S.emptyHint}>Define at least one agent to get started</div>
             </div>
           )}
 
@@ -354,26 +350,26 @@ export default function ConfigWizard({ onComplete }: Props) {
                   style={{
                     ...S.agentAvatar,
                     background: agent.avatar_color,
-                    color: "#0a0a0a",
+                    color: "var(--bg)",
                   }}
                 >
                   {(agent.name[0] ?? "?").toUpperCase()}
                 </span>
                 <span style={S.agentPaneTitle}>
                   AGENT_{String(i + 1).padStart(3, "0")}
-                  {agent.name ? `  //  ${agent.name.toUpperCase()}` : ""}
+                  {agent.name ? `` : ""}
                 </span>
                 {aiSuggested[i] && (
                   <span style={S.aiBadge}>AI</span>
                 )}
                 <button style={S.removeBtn} onClick={() => removeAgent(i)}>
-                  [✕]
+                  ×
                 </button>
               </div>
 
               <div style={S.agentForm}>
                 <div className="field-group">
-                  <span className="field-prompt">{"name    >"}</span>
+                  <span className="field-prompt">{"Name"}</span>
                   <input
                     className="field-input"
                     value={agent.name}
@@ -386,7 +382,7 @@ export default function ConfigWizard({ onComplete }: Props) {
                 )}
 
                 <div className="field-group">
-                  <span className="field-prompt">{"role    >"}</span>
+                  <span className="field-prompt">{"Role"}</span>
                   <input
                     className="field-input"
                     value={agent.role}
@@ -400,7 +396,7 @@ export default function ConfigWizard({ onComplete }: Props) {
 
                 <div style={S.promptSection}>
                   <div style={S.promptHeader}>
-                    <div style={S.promptLabel}>{"// SYSTEM PROMPT"}</div>
+                    <div style={S.promptLabel}>{"System Prompt"}</div>
                     <button
                       style={{
                         ...S.enhanceBtn,
@@ -411,7 +407,7 @@ export default function ConfigWizard({ onComplete }: Props) {
                       disabled={enhancing[i] || !agent.system_prompt.trim()}
                       title="AI-enhance this prompt"
                     >
-                      {enhancing[i] ? "[ enhancing... ]" : "[ ✦ ENHANCE ]"}
+                      {enhancing[i] ? "Enhancing…" : "✦ Enhance"}
                     </button>
                   </div>
                   <textarea
@@ -436,7 +432,7 @@ export default function ConfigWizard({ onComplete }: Props) {
 
                 <div style={S.inlineRow}>
                   <div className="field-group" style={{ flex: 1 }}>
-                    <span className="field-prompt">{"color   >"}</span>
+                    <span className="field-prompt">{"Color"}</span>
                     <input
                       type="color"
                       style={S.colorPicker}
@@ -446,7 +442,7 @@ export default function ConfigWizard({ onComplete }: Props) {
                     <span style={S.colorHex}>{agent.avatar_color}</span>
                   </div>
                   <div className="field-group" style={{ width: 140 }}>
-                    <span className="field-prompt">{"interval>"}</span>
+                    <span className="field-prompt">{"Interval"}</span>
                     <input
                       className="field-input"
                       type="number"
@@ -465,11 +461,11 @@ export default function ConfigWizard({ onComplete }: Props) {
           ))}
 
           <button style={S.addBtn} onClick={addAgent}>
-            + ADD AGENT
+            + Add agent
           </button>
         </div>
 
-        <div style={S.divider}>{'═'.repeat(50)}</div>
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
 
         {formError && (
           <div style={S.formError}>{formError}</div>
@@ -483,9 +479,9 @@ export default function ConfigWizard({ onComplete }: Props) {
           }}
           onClick={handleSubmit}
           disabled={agents.length === 0}
-          title={agents.length === 0 ? "// add at least one agent to continue" : undefined}
+          title={agents.length === 0 ? "Add at least one agent to continue" : undefined}
         >
-          LAUNCH WORKSPACE
+          Launch workspace
         </button>
       </div>
     </div>
@@ -515,21 +511,21 @@ const S: Record<string, React.CSSProperties> = {
     gap: "4px",
   },
   ascii: {
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     color: "var(--amber)",
-    textShadow: "var(--glow-amber)",
+    textShadow: "",
     fontSize: "13px",
     lineHeight: 1.2,
     margin: 0,
   },
   subtitle: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     letterSpacing: "0.08em",
     textShadow: "none",
   },
   divider: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     textShadow: "none",
     letterSpacing: 0,
@@ -541,14 +537,14 @@ const S: Record<string, React.CSSProperties> = {
     gap: "10px",
   },
   sectionLabel: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     letterSpacing: "0.1em",
     textShadow: "none",
   },
   emptyPane: {
-    border: "1px dashed var(--text-dim)",
-    background: "var(--bg-surface)",
+    border: "1px dashed var(--text-secondary)",
+    background: "var(--surface)",
     padding: "24px",
     display: "flex",
     flexDirection: "column",
@@ -556,12 +552,12 @@ const S: Record<string, React.CSSProperties> = {
     gap: "6px",
   },
   emptyPlus: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "24px",
     textShadow: "none",
   },
   emptyLabel: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "13px",
     letterSpacing: "0.1em",
     textShadow: "none",
@@ -573,7 +569,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   agentPane: {
     border: "1px solid var(--border)",
-    background: "var(--bg-surface)",
+    background: "var(--surface)",
   },
   agentPaneHeader: {
     display: "flex",
@@ -595,7 +591,7 @@ const S: Record<string, React.CSSProperties> = {
   agentPaneTitle: {
     flex: 1,
     fontSize: "12px",
-    color: "#0a0a0a",
+    color: "var(--bg)",
     letterSpacing: "0.08em",
     fontWeight: 700,
     textShadow: "none",
@@ -603,7 +599,7 @@ const S: Record<string, React.CSSProperties> = {
   removeBtn: {
     background: "transparent",
     border: "none",
-    color: "#0a0a0a",
+    color: "var(--bg)",
     fontSize: "12px",
     cursor: "pointer",
     opacity: 0.7,
@@ -619,7 +615,7 @@ const S: Record<string, React.CSSProperties> = {
     color: "var(--error)",
     fontSize: "11px",
     paddingLeft: "8px",
-    textShadow: "var(--glow-error)",
+    textShadow: "",
     marginTop: "2px",
   },
   promptSection: {
@@ -634,7 +630,7 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
   },
   promptLabel: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "11px",
     textShadow: "none",
   },
@@ -642,7 +638,7 @@ const S: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "1px solid var(--amber)",
     color: "var(--amber)",
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: "10px",
     letterSpacing: "0.08em",
     padding: "2px 8px",
@@ -658,7 +654,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   aiBadge: {
     fontSize: "9px",
-    color: "#0a0a0a",
+    color: "var(--bg)",
     background: "var(--amber)",
     padding: "1px 5px",
     letterSpacing: "0.08em",
@@ -673,9 +669,9 @@ const S: Record<string, React.CSSProperties> = {
     borderBottom: "1px dashed var(--border)",
     outline: "none",
     color: "var(--amber)",
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: "12px",
-    textShadow: "var(--glow-sm)",
+    textShadow: "",
     width: "100%",
     minHeight: "60px",
     resize: "vertical",
@@ -703,15 +699,15 @@ const S: Record<string, React.CSSProperties> = {
     textShadow: "none",
   },
   unit: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     textShadow: "none",
   },
   addBtn: {
     background: "transparent",
-    border: "1px dashed var(--text-dim)",
-    color: "var(--text-dim)",
-    fontFamily: "'Nunito', monospace",
+    border: "1px dashed var(--text-secondary)",
+    color: "var(--text-secondary)",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: "12px",
     letterSpacing: "0.1em",
     padding: "8px",
@@ -723,21 +719,21 @@ const S: Record<string, React.CSSProperties> = {
   formError: {
     color: "var(--error)",
     fontSize: "12px",
-    textShadow: "var(--glow-error)",
+    textShadow: "",
     borderLeft: "3px solid var(--error)",
     paddingLeft: "10px",
-    background: "#150505",
+    background: "var(--error-subtle)",
     padding: "8px 12px",
   },
   launchBtn: {
     background: "transparent",
     border: "1px solid var(--amber)",
     color: "var(--amber)",
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: "13px",
     letterSpacing: "0.15em",
     padding: "10px",
-    textShadow: "var(--glow-sm)",
+    textShadow: "",
     width: "100%",
     textAlign: "center" as const,
     transition: "background 0.1s, color 0.1s",
@@ -749,7 +745,7 @@ const S: Record<string, React.CSSProperties> = {
     flexWrap: "wrap" as const,
   },
   generateHint: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     textShadow: "none",
   },
@@ -757,11 +753,11 @@ const S: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "1px solid var(--amber)",
     color: "var(--amber)",
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: "12px",
     letterSpacing: "0.08em",
     padding: "5px 12px",
-    textShadow: "var(--glow-sm)",
+    textShadow: "",
     transition: "background 0.1s, color 0.1s",
   },
   // Init sequence
@@ -776,11 +772,11 @@ const S: Record<string, React.CSSProperties> = {
     color: "var(--amber)",
     fontSize: "16px",
     letterSpacing: "0.2em",
-    textShadow: "var(--glow-amber)",
+    textShadow: "",
     marginBottom: "4px",
   },
   initDivider: {
-    color: "var(--text-dim)",
+    color: "var(--text-secondary)",
     fontSize: "12px",
     textShadow: "none",
     marginBottom: "8px",
@@ -788,7 +784,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   initLine: {
     fontSize: "13px",
-    fontFamily: "'Nunito', monospace",
+    fontFamily: "'Inter', -apple-system, sans-serif",
     textShadow: "none",
   },
 };

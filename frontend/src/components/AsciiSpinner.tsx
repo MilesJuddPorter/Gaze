@@ -30,13 +30,13 @@ export default function AsciiSpinner({ state }: Props) {
   }, [state, frames.length, interval]);
 
   const color = state === "thinking" ? "#ffb000"
-    : state === "acting" ? "#33ff00"
+    : state === "acting" ? "var(--amber)"
     : state === "sleeping" ? "#1f521f"
-    : "#33ff00";
+    : "var(--amber)";
 
   return (
     <span style={{
-      fontFamily: "'JetBrains Mono', monospace",
+      fontFamily: "'Inter', sans-serif",
       fontSize: "13px",
       color,
       textShadow: color !== "#1f521f" ? `0 0 5px ${color}80` : "none",

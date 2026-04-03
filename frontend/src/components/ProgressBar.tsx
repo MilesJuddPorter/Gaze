@@ -48,12 +48,12 @@ const S: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Inter', sans-serif",
     fontSize: "11px",
   },
   bar: {
-    color: "#33ff00",
-    textShadow: "0 0 4px rgba(51,255,0,0.4)",
+    color: "var(--amber)",
+    textShadow: "none",
     letterSpacing: 0,
   },
   label: {

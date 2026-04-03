@@ -37,7 +37,7 @@ export default function ToolBubble({ event }: Props) {
 
   const inputLines = event.tool_input ? formatInput(event.tool_input) : [];
   const statusStr = event.status === "error" ? "[ERR]" : event.result_summary ? "[OK]" : "";
-  const statusColor = event.status === "error" ? "#ff3333" : "#33ff00";
+  const statusColor = event.status === "error" ? "var(--error)" : "var(--amber)";
 
   return (
     <div style={{ ...S.bubble, opacity: fading ? 0 : 1, transition: fading ? "opacity 0.5s ease" : "none" }}>
@@ -64,13 +64,13 @@ const S: Record<string, React.CSSProperties> = {
     border: "1px solid #ffb000",
     padding: "6px 10px",
     zIndex: 10,
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Geist Mono', 'Fira Code', monospace",
     fontSize: "11px",
     pointerEvents: "none" as const,
   },
   line: { display: "flex", gap: "4px", lineHeight: 1.4 },
   key: { color: "#ffb000", flexShrink: 0, textShadow: "0 0 4px rgba(255,176,0,0.4)" },
-  val: { color: "#33ff00", textShadow: "0 0 4px rgba(51,255,0,0.4)" },
+  val: { color: "var(--amber)", textShadow: "none" },
   dimLine: { color: "#1f521f", textShadow: "none" },
   status: { fontWeight: 700 },
 };

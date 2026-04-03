@@ -19,14 +19,14 @@ interface Props {
 
 const ACTION_COLOR: Record<string, string> = {
   reading:  "#1f521f",
-  editing:  "#33ff00",
+  editing:  "var(--amber)",
   running:  "#ffb000",
   thinking: "#1f521f",
   tool:     "#ffb000",
 };
 
 export default function AgentActivityCard({ agent, activityLines, currentTool, onClick }: Props) {
-  const nameColor = agent.avatar_color ?? "#33ff00";
+  const nameColor = agent.avatar_color ?? "var(--amber)";
   const nameGlow = `0 0 6px ${nameColor}80`;
   const headerBg = nameColor + "26"; // 15% opacity
 
@@ -70,7 +70,7 @@ export default function AgentActivityCard({ agent, activityLines, currentTool, o
             return (
               <div key={i} style={{ ...S.actLine, opacity: dimmed ? 0.45 : 1 }}>
                 <span style={S.actPrefix}>&gt;</span>
-                <span style={{ color: ACTION_COLOR[line.type] ?? "#33ff00", textShadow: isNew ? "0 0 4px rgba(51,255,0,0.3)" : "none" }}>
+                <span style={{ color: ACTION_COLOR[line.type] ?? "var(--amber)", textShadow: isNew ? "0 0 4px rgba(51,255,0,0.3)" : "none" }}>
                   {line.type !== "tool" ? `${line.type}: ` : ""}{line.description}
                 </span>
               </div>
@@ -105,7 +105,7 @@ const S: Record<string, React.CSSProperties> = {
     border: "1px solid #1f521f",
     marginBottom: "4px",
     cursor: "pointer",
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: "'Geist Mono', 'Fira Code', monospace",
     transition: "border-color 0.15s",
   },
   header: {
@@ -138,7 +138,7 @@ const S: Record<string, React.CSSProperties> = {
     minHeight: "20px",
   },
   actingLine: { display: "flex", alignItems: "center", fontSize: "11px" },
-  actingLabel: { color: "#33ff00", textShadow: "0 0 4px rgba(51,255,0,0.4)" },
+  actingLabel: { color: "var(--amber)", textShadow: "none" },
   actingText: { color: "#1f521f", textShadow: "none" },
   idleLine: { fontSize: "11px", color: "#1f521f", textShadow: "none" },
 };

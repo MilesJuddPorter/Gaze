@@ -1,4 +1,5 @@
 import { useState } from "react";
+import RaccoonAvatar from "./RaccoonAvatar";
 import type { Agent } from "../types";
 
 interface Props {
@@ -9,11 +10,11 @@ interface Props {
   onToggleOoo: (agentId: number, isOoo: boolean) => void;
 }
 
-const STATUS_DISPLAY: Record<string, string> = {
-  idle:     "🌙 resting",
-  thinking: "💭 thinking...",
-  acting:   "⚡ working",
-  sleeping: "💤 sleeping",
+const STATUS_LABEL: Record<string, string> = {
+  idle:     "Idle",
+  thinking: "Thinking",
+  acting:   "Active",
+  sleeping: "Idle",
 };
 
 function getAvatarClass(agent: Agent): string {
@@ -21,85 +22,86 @@ function getAvatarClass(agent: Agent): string {
   if (agent.status === "thinking") return "thinking";
   if (agent.status === "acting") return "active";
   if (agent.status === "sleeping") return "sleeping";
-  return "active";
+  return "";
+}
+
+function getDotClass(agent: Agent): string {
+  if (!!agent.is_ooo) return "ooo";
+  if (agent.status === "thinking") return "thinking";
+  if (agent.status === "acting") return "active";
+  return "idle";
 }
 
 export default function AgentRoster({ agents, agentsRunning, onStart, onStop, onToggleOoo }: Props) {
-  const [divingIds, setDivingIds] = useState<Set<number>>(new Set());
+  const [animating, setAnimating] = useState<Set<number>>(new Set());
 
   const handleToggleOoo = (agent: Agent) => {
     const newOoo = !agent.is_ooo;
     if (newOoo) {
-      // Trigger dive animation
-      setDivingIds((prev) => new Set(prev).add(agent.id));
+      setAnimating((prev) => new Set(prev).add(agent.id));
       setTimeout(() => {
-        setDivingIds((prev) => {
+        setAnimating((prev) => {
           const next = new Set(prev);
           next.delete(agent.id);
           return next;
         });
-      }, 500);
+      }, 400);
     }
     onToggleOoo(agent.id, newOoo);
   };
 
   return (
     <div className="forum-roster-col">
-      <div className="roster-header">🌙 The Den</div>
+      <div className="roster-header">
+        <span className="text-subheading">Agents</span>
+      </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {agents.map((agent) => {
           const isOoo = !!agent.is_ooo;
-          const isDiving = divingIds.has(agent.id);
-          const statusLabel = isOoo
-            ? "🗑️ out of den"
-            : STATUS_DISPLAY[agent.status] || "🌙 resting";
+          const initial = agent.name.charAt(0).toUpperCase();
+          const color = agent.avatar_color || "#F59E0B";
 
           return (
             <div
               key={agent.id}
               className={`roster-agent${isOoo ? " ooo" : ""}`}
+              style={{
+                transition: "all 0.3s ease",
+              }}
             >
-              <div className="roster-agent-header">
-                {/* Avatar with state */}
-                <div
-                  className={`avatar avatar-size-sm ${getAvatarClass(agent)}`}
-                  style={{
-                    animation: isDiving ? "ooo-dive 0.5s ease" : undefined,
-                  }}
-                >
-                  {isOoo ? "🗑️" : "🦝"}
-                </div>
+              {/* Raccoon avatar */}
+              <RaccoonAvatar
+                status={isOoo ? "ooo" : agent.status}
+                color={color}
+                size={34}
+              />
 
-                {/* Name */}
-                <span className={`roster-agent-name${isOoo ? " ooo" : ""}`}>
+              <div className="roster-agent-info">
+                <div className={`roster-agent-name${isOoo ? " ooo" : ""}`}>
                   {agent.name}
-                </span>
-
-                {/* OOO Toggle */}
-                <button
-                  className={`roster-ooo-btn${isOoo ? " active" : ""}`}
-                  onClick={() => handleToggleOoo(agent)}
-                  title={isOoo ? "Back in den" : "Mark OOO"}
-                >
-                  {isOoo ? "Back" : "OOO"}
-                </button>
+                  {isOoo && (
+                    <span className="badge badge-ooo" style={{ marginLeft: 6, verticalAlign: "middle" }}>
+                      OOO
+                    </span>
+                  )}
+                </div>
+                <div className="roster-agent-role">{agent.role}</div>
+                <div className="roster-agent-status">
+                  <div className={`status-dot ${getDotClass(agent)}`} />
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                    {isOoo ? "Unavailable" : STATUS_LABEL[agent.status] || "Idle"}
+                  </span>
+                </div>
               </div>
 
-              <div className="roster-agent-role">{agent.role}</div>
-
-              <div style={{ paddingLeft: "46px" }}>
-                <span
-                  className={`status-badge ${
-                    isOoo ? "status-ooo" :
-                    agent.status === "thinking" ? "status-think" :
-                    agent.status === "acting" ? "status-act" :
-                    agent.status === "sleeping" ? "status-sleep" : "status-idle"
-                  }`}
-                >
-                  {statusLabel}
-                </span>
-              </div>
+              <button
+                className={`roster-ooo-btn${isOoo ? " active" : ""}`}
+                onClick={() => handleToggleOoo(agent)}
+                title={isOoo ? "Mark available" : "Mark as OOO"}
+              >
+                {isOoo ? "Available" : "OOO"}
+              </button>
             </div>
           );
         })}
@@ -108,11 +110,11 @@ export default function AgentRoster({ agents, agentsRunning, onStart, onStop, on
       <div className="roster-controls">
         {agentsRunning ? (
           <button className="btn btn-secondary btn-sm" onClick={onStop} style={{ flex: 1 }}>
-            ⏹ Stop
+            Stop agents
           </button>
         ) : (
           <button className="btn btn-primary btn-sm" onClick={onStart} style={{ flex: 1 }}>
-            ▶ Start
+            Start agents
           </button>
         )}
       </div>

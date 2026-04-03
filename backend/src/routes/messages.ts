@@ -7,7 +7,7 @@ import {
   getReactionsForMessages,
   type Message,
 } from "../database.js";
-import { wakeAgent } from "../agentLoop.js";
+import { wakeAgent, wakeAll } from "../agentLoop.js";
 
 export async function messageRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/messages
@@ -51,6 +51,14 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
     // OOO agents get an instant bot reply instead of waking
     const agents = getAllAgents();
     const mentionedNames = (content.match(/@(\w+)/g) ?? []).map((m) => m.slice(1).toLowerCase());
+
+    // @everyone wakes all non-OOO agents
+    if (mentionedNames.includes("everyone")) {
+      for (const agent of agents) {
+        if (!agent.is_ooo) wakeAgent(agent.id);
+      }
+    }
+
     for (const agent of agents) {
       if (!mentionedNames.includes(agent.name.toLowerCase())) continue;
 

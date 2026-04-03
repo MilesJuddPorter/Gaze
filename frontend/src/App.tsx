@@ -35,10 +35,17 @@ export default function App() {
   if (appState === "loading") {
     return (
       <div className="loading-screen">
-        <span style={{ fontSize: "48px", animation: "breathe 2s ease-in-out infinite" }}>🦝</span>
-        <div style={{ color: "var(--text-dim)", fontSize: "var(--text-sm)" }}>
-          Setting up the den...
-        </div>
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ opacity: 0.5 }}>
+          <path d="M8 4 L4 12 L12 12 Z" fill="var(--text-primary)"/>
+          <path d="M24 4 L20 12 L28 12 Z" fill="var(--text-primary)"/>
+          <ellipse cx="16" cy="20" rx="11" ry="10" fill="var(--text-primary)"/>
+          <ellipse cx="11" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+          <ellipse cx="21" cy="19" rx="4" ry="3.5" fill="var(--bg)"/>
+          <circle cx="11" cy="19" r="1.5" fill="var(--amber)"/>
+          <circle cx="21" cy="19" r="1.5" fill="var(--amber)"/>
+          <ellipse cx="16" cy="24" rx="2" ry="1.2" fill="var(--bg)"/>
+        </svg>
+        <div style={{ color: "var(--text-secondary)", fontSize: 13 }}>Loading...</div>
       </div>
     );
   }
@@ -58,33 +65,4 @@ export default function App() {
   );
 }
 
-const S: Record<string, React.CSSProperties> = {
-  screen: {
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#0a0a0a",
-    gap: "12px",
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  loadText: {
-    fontSize: "32px",
-    color: "#33ff00",
-    letterSpacing: "0.3em",
-    textTransform: "uppercase" as const,
-    textShadow: "0 0 12px rgba(51,255,0,0.8)",
-  },
-  loadSub: {
-    fontSize: "12px",
-    color: "#1f521f",
-    letterSpacing: "0.1em",
-    textShadow: "none",
-  },
-  cursor: {
-    animation: "blink 1s step-end infinite",
-    display: "inline-block",
-    marginLeft: "4px",
-  },
-};
+

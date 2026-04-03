@@ -1,3 +1,4 @@
+import RaccoonAvatar from "./RaccoonAvatar";
 import type { Agent } from "../types";
 
 interface Message {
@@ -18,8 +19,9 @@ interface Props {
 }
 
 function formatTime(ts: string): string {
-  const d = new Date(ts);
-  return d.toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "2-digit" });
+  return new Date(ts).toLocaleTimeString("en-US", {
+    hour12: true, hour: "numeric", minute: "2-digit",
+  });
 }
 
 function highlightMentions(text: string) {
@@ -33,79 +35,64 @@ function highlightMentions(text: string) {
 
 export default function MessageBubble({ message, prevMessage, agents = [] }: Props) {
   const time = formatTime(message.timestamp);
-  const name = message.author_name || message.sender_name || "unknown";
+  const name = message.author_name || message.sender_name || "Unknown";
 
-  // GazeBot messages (OOO auto-replies)
+  // GazeBot OOO message
   if (message.message_type === "system_bot") {
     return (
-      <div className="message-bubble msg-gazebot">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <span style={{ fontSize: "18px" }}>🤖</span>
-          <span style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--text-dim)" }}>
-            GazeBot
-          </span>
-          <span className="msg-timestamp">{time}</span>
-        </div>
-        <div className="msg-content" style={{ color: "var(--text-dim)", fontStyle: "italic" }}>
+      <div className="message-gazebot">
+        <div className="message-gazebot-label">GAZE</div>
+        <div className="message-gazebot-content">
           {highlightMentions(message.content)}
         </div>
       </div>
     );
   }
 
-  // System messages
+  // System message
   if (message.message_type === "system") {
     return (
-      <div className="msg-system">
+      <div className="message-system">
         <span>{message.content}</span>
       </div>
     );
   }
 
-  // Human/user message
-  if (!message.agent_id) {
-    return (
-      <div className="message-bubble msg-human">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <span style={{ fontSize: "18px" }}>🦝</span>
-          <span className="msg-agent-name" style={{ color: "var(--cream)" }}>
-            {name}
-          </span>
-          <span className="msg-timestamp">{time}</span>
-        </div>
-        <div className="msg-content" style={{ paddingLeft: "28px" }}>
-          {highlightMentions(message.content)}
-        </div>
-      </div>
-    );
-  }
-
-  // Agent message
   const agent = agents.find((a) => a.id === message.agent_id);
+  const isHuman = !message.agent_id;
+  const color = agent?.avatar_color || "#8B95A3";
+  const initial = name.charAt(0).toUpperCase();
 
   // Collapse header for consecutive same-agent messages within 5 min
-  const sameAuthor = prevMessage?.agent_id === message.agent_id;
+  const sameAuthor = prevMessage?.agent_id === message.agent_id
+    && prevMessage?.author_name === message.author_name;
   const prevTime = prevMessage ? new Date(prevMessage.timestamp).getTime() : 0;
   const currTime = new Date(message.timestamp).getTime();
   const collapseHeader = sameAuthor && (currTime - prevTime < 5 * 60 * 1000);
 
-  const statusClass = agent
-    ? agent.status === "thinking" ? "thinking"
-    : agent.status === "acting" ? "active"
-    : agent.status === "sleeping" ? "sleeping"
-    : "active"
-    : "active";
+  const avatarClass = isHuman ? "" :
+    agent?.status === "thinking" ? "thinking" :
+    agent?.status === "acting" ? "active" : "";
 
   return (
-    <div className="message-bubble">
+    <div className="message-row">
       {!collapseHeader && (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-          <div className={`avatar avatar-size-sm ${statusClass}`}>🦝</div>
-          <span className="msg-agent-name">{name}</span>
-          <span className="msg-timestamp">{time}</span>
+        <div className="message-header">
+          <RaccoonAvatar
+            status={isHuman ? "idle" : (agent && !!agent.is_ooo ? "ooo" : (agent?.status ?? "idle"))}
+            color={color}
+            size={34}
+          />
+          <span className="message-author">
+            {isHuman ? "You" : name}
+          </span>
+          <span className="message-time">{time}</span>
         </div>
       )}
-      <div className="msg-content" style={{ paddingLeft: collapseHeader ? "0" : "46px" }}>
+      <div
+        className="message-content"
+        style={collapseHeader ? { paddingLeft: 0 } : undefined}
+      >
         {message.content.split("\n").map((line, i) => (
           <div key={i}>{highlightMentions(line)}</div>
         ))}
