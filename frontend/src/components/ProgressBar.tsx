@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 
 interface Props {
-  isActive: boolean;
+  active: boolean;
   label?: string;
 }
 
-export default function ProgressBar({ isActive, label = "thinking..." }: Props) {
+export default function ProgressBar({ active, label = "thinking..." }: Props) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!isActive) {
+    if (!active) {
       setProgress(0);
       return;
     }
@@ -22,27 +22,42 @@ export default function ProgressBar({ isActive, label = "thinking..." }: Props) 
       const elapsed = Date.now() - startTime;
       const percent = Math.min((elapsed / duration) * targetProgress, targetProgress);
       setProgress(percent);
-
-      if (percent >= targetProgress) {
-        clearInterval(interval);
-      }
+      if (percent >= targetProgress) clearInterval(interval);
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [active]);
+
+  if (!active) return null;
 
   const barLength = 20;
   const filledLength = Math.floor((progress / 100) * barLength);
   const emptyLength = barLength - filledLength;
-
   const bar = "█".repeat(filledLength) + "░".repeat(emptyLength);
 
   return (
-    <div className="progress-bar my-1 font-mono text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-green-400">[{bar}]</span>
-        <span className="text-gray-400">{label}</span>
-      </div>
+    <div style={S.wrap}>
+      <span style={S.bar}>[{bar}]</span>
+      <span style={S.label}>{label}</span>
     </div>
   );
 }
+
+const S: Record<string, React.CSSProperties> = {
+  wrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: "11px",
+  },
+  bar: {
+    color: "#33ff00",
+    textShadow: "0 0 4px rgba(51,255,0,0.4)",
+    letterSpacing: 0,
+  },
+  label: {
+    color: "#1f521f",
+    textShadow: "none",
+  },
+};

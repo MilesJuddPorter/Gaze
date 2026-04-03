@@ -83,7 +83,7 @@ export default function ForumFeed({ messages, agents }: Props) {
             <MessageBubble
               key={msg.id}
               message={msg}
-              agents={agents}
+              
             />
           ))}
         </div>

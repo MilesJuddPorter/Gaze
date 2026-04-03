@@ -34,7 +34,7 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
   app.post<{
     Body: { content: string; author_name?: string };
   }>("/api/messages", async (request, reply) => {
-    const { content, author_name = "Miles" } = request.body;
+    const { content, author_name = "You" } = request.body;
     if (!content?.trim()) {
       return reply.code(400).send({ error: "Content is required" });
     }

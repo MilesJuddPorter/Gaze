@@ -1,90 +1,87 @@
-import React from "react";
-import type { Message, Agent } from "../types";
+interface Message {
+  id: number;
+  agent_id: number | null;
+  author_name: string;
+  sender_name?: string;
+  content: string;
+  message_type: string;
+  timestamp: string;
+  avatar_color?: string;
+}
 
 interface Props {
   message: Message;
-  agents: Agent[];
+  prevMessage?: Message;
+  repoPath?: string;
 }
 
-function formatTime(timestamp: string): string {
-  const d = new Date(timestamp.endsWith("Z") ? timestamp : timestamp + "Z");
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+function formatTime(ts: string): string {
+  const d = new Date(ts);
+  return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-function parseContent(content: string, agents: Agent[]): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
-  const mentionRegex = /@(\w+)/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = mentionRegex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index));
-    }
-    parts.push(
-      <span key={match.index} className="mention">
-        @{match[1]}
-      </span>
-    );
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex));
-  }
-
-  return parts;
+function highlightMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    /^@\w+$/.test(part)
+      ? <span key={i} className="mention">{part}</span>
+      : <span key={i}>{part}</span>
+  );
 }
 
-export default function MessageBubble({ message, agents }: Props) {
-  // System message — centered italic style
+export default function MessageBubble({ message, prevMessage, repoPath = "~" }: Props) {
+  const time = formatTime(message.timestamp);
+  const name = message.author_name || message.sender_name || "unknown";
+
+  // System message
   if (message.message_type === "system") {
     return (
-      <div className="message-system">
-        {message.content}
+      <div className="msg-system">
+        <span>// {message.content}</span>
+        <span>{time}</span>
       </div>
     );
   }
 
-  const agent = agents.find((a) => a.id === message.agent_id);
-  const isHuman = !agent;
-
-  if (isHuman) {
+  // Human/user message
+  if (!message.agent_id) {
     return (
-      <div className="message-bubble">
-        <div className="message-avatar" style={{ background: "var(--bg)", color: "var(--text-dim)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700 }}>
-          Y
-        </div>
-        <div className="message-body">
-          <div className="message-meta">
-            <span className="message-author">{message.author_name}</span>
-            <span className="message-time">{formatTime(message.timestamp)}</span>
-          </div>
-          <div className="message-content">{parseContent(message.content, agents)}</div>
-        </div>
+      <div className="msg-human">
+        <span className="msg-human-prompt">you@gaze:{repoPath}$ </span>
+        {highlightMentions(message.content)}
       </div>
     );
   }
 
-  const initial = (agent.name[0] ?? "?").toUpperCase();
-  const avatarBg = agent.avatar_color ?? "#33ff00";
+  // Agent message
+  const color = message.avatar_color || "#33ff00";
+  const glow = `0 0 5px ${color}80`;
+
+  // Collapse header for consecutive messages from same agent within 5 min
+  const sameAuthor = prevMessage?.agent_id === message.agent_id;
+  const prevTime = prevMessage ? new Date(prevMessage.timestamp).getTime() : 0;
+  const currTime = new Date(message.timestamp).getTime();
+  const withinWindow = currTime - prevTime < 5 * 60 * 1000;
+  const collapseHeader = sameAuthor && withinWindow;
 
   return (
-    <div className="message-bubble">
-      <div
-        className="message-avatar"
-        style={{ background: avatarBg, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700 }}
-      >
-        {initial}
-      </div>
-      <div className="message-body">
-        <div className="message-meta">
-          <span className="message-author">{message.author_name}</span>
-          <span className="message-role">{agent.role}</span>
-          <span className="message-time">{formatTime(message.timestamp)}</span>
+    <div className="msg-agent">
+      {!collapseHeader && (
+        <div className="msg-agent-header">
+          <span
+            className="msg-agent-name"
+            style={{ color, textShadow: glow }}
+          >
+            [{name.toUpperCase()}]
+          </span>
+          <span className="msg-agent-time">{time}</span>
         </div>
-        <div className="message-content">{parseContent(message.content, agents)}</div>
-      </div>
+      )}
+      {message.content.split("\n").map((line, i) => (
+        <div key={i} className="msg-agent-line">
+          {highlightMentions(line)}
+        </div>
+      ))}
     </div>
   );
 }

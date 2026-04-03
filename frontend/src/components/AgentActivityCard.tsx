@@ -81,7 +81,7 @@ export default function AgentActivityCard({ agent, activityLines, currentTool, o
 
       {/* Progress bar / status */}
       <div style={S.footer}>
-        <ProgressBar isActive={agent.status === "thinking"} label="thinking..." />
+        <ProgressBar active={agent.status === "thinking"} label="thinking..." />
         {agent.status === "acting" && agent.current_action && (
           <div style={S.actingLine}>
             <span style={S.actingLabel}>[ACT·]</span>&nbsp;

@@ -8,6 +8,8 @@ const args = process.argv.slice(2);
 let targetDir = process.cwd();
 let port = 0; // 0 = auto-pick
 
+let resetMode = false;
+
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--dir" && args[i + 1]) {
     targetDir = path.resolve(args[i + 1]);
@@ -15,11 +17,26 @@ for (let i = 0; i < args.length; i++) {
   } else if (args[i] === "--port" && args[i + 1]) {
     port = parseInt(args[i + 1]);
     i++;
+  } else if (args[i] === "--reset") {
+    resetMode = true;
   }
 }
 
 // Create .gaze directory
 const gazeDir = path.join(targetDir, ".gaze");
+
+// Handle --reset: wipe .gaze/ and exit (fresh start on next launch)
+if (resetMode) {
+  if (fs.existsSync(gazeDir)) {
+    fs.rmSync(gazeDir, { recursive: true, force: true });
+    console.log(`[RESET] Wiped ${gazeDir}`);
+    console.log(`[RESET] Run 'gaze' again to start fresh.`);
+  } else {
+    console.log(`[RESET] Nothing to reset — ${gazeDir} does not exist.`);
+  }
+  process.exit(0);
+}
+
 if (!fs.existsSync(gazeDir)) {
   fs.mkdirSync(gazeDir, { recursive: true });
   console.log(`Created ${gazeDir}`);
