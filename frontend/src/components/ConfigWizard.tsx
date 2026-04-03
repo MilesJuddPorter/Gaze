@@ -45,6 +45,45 @@ export default function ConfigWizard({ onComplete }: Props) {
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [initLog, setInitLog] = useState<string[]>([]);
+  const [enhancing, setEnhancing] = useState<Record<number, boolean>>({});
+
+  const [generating, setGenerating] = useState(false);
+
+  const generateFromRepo = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/agents/generate-from-repo", { method: "POST" });
+      if (res.ok) {
+        const { agents: suggested } = await res.json();
+        if (Array.isArray(suggested) && suggested.length > 0) {
+          setAgents(suggested);
+        }
+      }
+    } catch { /* ignore */ }
+    setGenerating(false);
+  };
+
+  const enhancePrompt = async (i: number) => {
+    const seed = agents[i].system_prompt.trim();
+    if (!seed) return;
+    setEnhancing((prev) => ({ ...prev, [i]: true }));
+    try {
+      const res = await fetch("/api/agents/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seed,
+          name: agents[i].name,
+          role: agents[i].role,
+        }),
+      });
+      if (res.ok) {
+        const { prompt } = await res.json();
+        updateAgent(i, { system_prompt: prompt });
+      }
+    } catch { /* ignore */ }
+    setEnhancing((prev) => ({ ...prev, [i]: false }));
+  };
 
   const addAgent = () => {
     setAgents([
@@ -137,6 +176,25 @@ export default function ConfigWizard({ onComplete }: Props) {
         const data = await res.json();
         throw new Error(data.error ?? "failed to save config");
       }
+      // Verify agents actually started
+      await new Promise((r) => setTimeout(r, 500));
+      const agentsRes = await fetch("/api/agents");
+      const agentsData = await agentsRes.json();
+      const runningCount = Array.isArray(agentsData)
+        ? agentsData.filter((a: { running?: boolean }) => a.running).length
+        : 0;
+
+      if (runningCount === 0) {
+        setInitLog((prev) => [
+          ...prev,
+          "[ERR] no agents started — check ANTHROPIC_API_KEY",
+          "> export ANTHROPIC_API_KEY=sk-... and relaunch",
+        ]);
+        setSubmitting(false);
+        return;
+      }
+
+      setInitLog((prev) => [...prev, `[OK] ${runningCount} agent${runningCount > 1 ? "s" : ""} online`]);
       await new Promise((r) => setTimeout(r, 300));
       setInitLog((prev) => [...prev, "[OK] workspace ready"]);
       await new Promise((r) => setTimeout(r, 600));
@@ -197,6 +255,22 @@ export default function ConfigWizard({ onComplete }: Props) {
         </div>
 
         <div style={S.divider}>{'═'.repeat(50)}</div>
+
+        {/* AI Generate from Repo */}
+        <div style={S.generateRow}>
+          <span style={S.generateHint}>// auto-detect agents from this repo:</span>
+          <button
+            style={{
+              ...S.generateBtn,
+              opacity: generating ? 0.5 : 1,
+              cursor: generating ? "not-allowed" : "pointer",
+            }}
+            onClick={generateFromRepo}
+            disabled={generating}
+          >
+            {generating ? "[ analyzing repo... ]" : "[ ✦ GENERATE AGENTS FROM REPO ]"}
+          </button>
+        </div>
 
         {/* Workspace Name */}
         <div style={S.section}>
@@ -281,7 +355,21 @@ export default function ConfigWizard({ onComplete }: Props) {
                 )}
 
                 <div style={S.promptSection}>
-                  <div style={S.promptLabel}>{"// SYSTEM PROMPT"}</div>
+                  <div style={S.promptHeader}>
+                    <div style={S.promptLabel}>{"// SYSTEM PROMPT"}</div>
+                    <button
+                      style={{
+                        ...S.enhanceBtn,
+                        opacity: enhancing[i] || !agent.system_prompt.trim() ? 0.4 : 1,
+                        cursor: enhancing[i] || !agent.system_prompt.trim() ? "not-allowed" : "pointer",
+                      }}
+                      onClick={() => enhancePrompt(i)}
+                      disabled={enhancing[i] || !agent.system_prompt.trim()}
+                      title="AI-enhance this prompt"
+                    >
+                      {enhancing[i] ? "[ enhancing... ]" : "[ ✦ ENHANCE ]"}
+                    </button>
+                  </div>
                   <textarea
                     style={S.promptTextarea}
                     value={agent.system_prompt}
@@ -488,10 +576,26 @@ const S: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: "4px",
   },
+  promptHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   promptLabel: {
     color: "var(--muted)",
     fontSize: "11px",
     textShadow: "none",
+  },
+  enhanceBtn: {
+    background: "transparent",
+    border: "1px solid var(--amber)",
+    color: "var(--amber)",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: "10px",
+    letterSpacing: "0.08em",
+    padding: "2px 8px",
+    textShadow: "none",
+    transition: "background 0.1s, color 0.1s",
   },
   promptTextarea: {
     background: "transparent",
@@ -567,6 +671,28 @@ const S: Record<string, React.CSSProperties> = {
     textShadow: "var(--glow)",
     width: "100%",
     textAlign: "center" as const,
+    transition: "background 0.1s, color 0.1s",
+  },
+  generateRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap" as const,
+  },
+  generateHint: {
+    color: "var(--muted)",
+    fontSize: "12px",
+    textShadow: "none",
+  },
+  generateBtn: {
+    background: "transparent",
+    border: "1px solid var(--green)",
+    color: "var(--green)",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: "12px",
+    letterSpacing: "0.08em",
+    padding: "5px 12px",
+    textShadow: "var(--glow)",
     transition: "background 0.1s, color 0.1s",
   },
   // Init sequence

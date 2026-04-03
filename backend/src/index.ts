@@ -29,6 +29,13 @@ declare module "fastify" {
 }
 
 export async function startServer(gazeDir: string, port: number): Promise<void> {
+  // Warn about missing API key but don't crash — the config panel still needs to load.
+  // Agents simply won't be able to make LLM calls without it; the error will surface per-agent.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn("\n[WARN] ANTHROPIC_API_KEY is not set — agents will fail to respond.");
+    console.warn("       Set it before launching: export ANTHROPIC_API_KEY=sk-ant-...\n");
+  }
+
   // Initialize database
   initDatabase(gazeDir);
 

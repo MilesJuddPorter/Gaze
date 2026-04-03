@@ -5,6 +5,7 @@ import MessageBubble from "./MessageBubble";
 interface Props {
   messages: Message[];
   agents: Agent[];
+  repoPath?: string;
 }
 
 function formatDate(timestamp: string): string {

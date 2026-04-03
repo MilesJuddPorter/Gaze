@@ -3,6 +3,7 @@ import type { Agent } from "../types";
 import AgentActivityCard, { type ActivityLine } from "./AgentActivityCard";
 import AgentDeepDive from "./AgentDeepDive";
 import { type ToolEvent } from "./ToolBubble";
+import { useGazeSSE } from "../context/GazeSSE";
 
 interface Props {
   agents: Agent[];
@@ -10,22 +11,18 @@ interface Props {
   onStop: () => void;
 }
 
-// SSE event shapes
-interface ToolStartEvent { agent_id: number; tool_name: string; tool_input: Record<string, unknown>; timestamp: string; }
-interface AgentActivityEvent { agent_id: number; action_type: string; description: string; timestamp: string; }
-
 export default function AgentActivityBoard({ agents, onStart, onStop }: Props) {
-  // Per-agent activity lines (FIFO max 3)
+  // Subscribe to the shared SSE context — no second EventSource opened here
+  const { onToolStart, onToolEnd, onAgentActivity } = useGazeSSE();
+
   const [activityMap, setActivityMap] = useState<Record<number, ActivityLine[]>>({});
-  // Per-agent current tool bubble
   const [toolMap, setToolMap] = useState<Record<number, ToolEvent | null>>({});
-  // Deep dive
   const [deepDiveAgent, setDeepDiveAgent] = useState<Agent | null>(null);
 
   const addActivity = useCallback((agentId: number, line: ActivityLine) => {
     setActivityMap((prev) => {
       const existing = prev[agentId] ?? [];
-      const updated = [...existing, line].slice(-3);
+      const updated = [...existing, line].slice(-3); // FIFO max 3
       return { ...prev, [agentId]: updated };
     });
   }, []);
@@ -37,43 +34,42 @@ export default function AgentActivityBoard({ agents, onStart, onStop }: Props) {
         const res = await fetch(`/api/agents/${agent.id}/activity?limit=3`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const lines: ActivityLine[] = data.reverse().map((d: { action_type: string; description: string; timestamp: string }) => ({
-            type: d.action_type as ActivityLine["type"],
-            description: d.description,
-            timestamp: d.timestamp,
-          }));
+          const lines: ActivityLine[] = data.reverse().map(
+            (d: { action_type: string; description: string; timestamp: string }) => ({
+              type: d.action_type as ActivityLine["type"],
+              description: d.description,
+              timestamp: d.timestamp,
+            })
+          );
           setActivityMap((prev) => ({ ...prev, [agent.id]: lines }));
         }
       } catch { /* ignore */ }
     });
   }, [agents.map((a) => a.id).join(",")]);
 
-  // Listen for SSE tool_start and agent_activity events
-  // (Forum.tsx owns the SSE connection — we receive events via props or a shared context)
-  // For now, use a separate SSE listener scoped to this board
+  // Subscribe to shared SSE events (no new connection opened)
   useEffect(() => {
-    const es = new EventSource("/api/messages/stream");
-
-    es.addEventListener("tool_start", (e) => {
-      const data: ToolStartEvent = JSON.parse(e.data);
-      const toolEvent: ToolEvent = {
-        tool_name: data.tool_name,
-        tool_input: data.tool_input,
-        timestamp: data.timestamp,
-      };
-      setToolMap((prev) => ({ ...prev, [data.agent_id]: toolEvent }));
-    });
-
-    es.addEventListener("tool_end", (e) => {
-      const data = JSON.parse(e.data);
+    const unsubStart = onToolStart((data) => {
       setToolMap((prev) => ({
         ...prev,
-        [data.agent_id]: { ...prev[data.agent_id]!, result_summary: data.result_summary, status: data.status, timestamp: data.timestamp },
+        [data.agent_id]: {
+          tool_name: data.tool_name,
+          tool_input: data.tool_input,
+          timestamp: data.timestamp,
+        },
       }));
     });
 
-    es.addEventListener("agent_activity", (e) => {
-      const data: AgentActivityEvent = JSON.parse(e.data);
+    const unsubEnd = onToolEnd((data) => {
+      setToolMap((prev) => ({
+        ...prev,
+        [data.agent_id]: prev[data.agent_id]
+          ? { ...prev[data.agent_id]!, result_summary: data.result_summary, status: data.status, timestamp: data.timestamp }
+          : null,
+      }));
+    });
+
+    const unsubActivity = onAgentActivity((data) => {
       addActivity(data.agent_id, {
         type: data.action_type as ActivityLine["type"],
         description: data.description,
@@ -81,9 +77,12 @@ export default function AgentActivityBoard({ agents, onStart, onStop }: Props) {
       });
     });
 
-    es.onerror = () => es.close();
-    return () => es.close();
-  }, []);
+    return () => {
+      unsubStart();
+      unsubEnd();
+      unsubActivity();
+    };
+  }, [onToolStart, onToolEnd, onAgentActivity, addActivity]);
 
   return (
     <div style={S.panel}>

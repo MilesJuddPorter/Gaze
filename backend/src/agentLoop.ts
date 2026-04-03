@@ -16,10 +16,9 @@ import { DEFAULT_SETTINGS } from "./config.js";
 
 const client = new Anthropic();
 
-// Global state
+// Global state — mention-only mode: agents sleep until @mentioned
 const _running = new Map<number, boolean>();
 const _wakeEvents = new Map<number, () => void>();
-const _agentTimers = new Map<number, NodeJS.Timeout>();
 
 // SSE broadcast callback — set by the server
 let _broadcastFn: ((event: string, data: unknown) => void) | null = null;
@@ -229,21 +228,14 @@ async function agentLoop(agentId: number): Promise<void> {
 
     if (!_running.get(agentId)) break;
 
-    // Sleep for check_interval seconds (interruptible)
+    // Mention-only: sleep indefinitely until woken by an @mention
     updateAgentStatus(agentId, "sleeping", null);
     broadcast("agent_status", { agentId, status: "sleeping", action: null });
 
-    const sleepMs = freshAgent.check_interval * 1000;
     await new Promise<void>((resolve) => {
-      const timer = setTimeout(resolve, sleepMs);
-      _agentTimers.set(agentId, timer);
-      _wakeEvents.set(agentId, () => {
-        clearTimeout(timer);
-        resolve();
-      });
+      _wakeEvents.set(agentId, resolve);
     });
     _wakeEvents.delete(agentId);
-    _agentTimers.delete(agentId);
   }
 
   updateAgentStatus(agentId, "idle", null);
@@ -264,11 +256,9 @@ export function startAgent(agentId: number): void {
 
 export function stopAgent(agentId: number): void {
   _running.set(agentId, false);
-  // Wake from sleep so loop can exit
+  // Wake from indefinite sleep so the loop can exit cleanly
   const wakeEvent = _wakeEvents.get(agentId);
   if (wakeEvent) wakeEvent();
-  const timer = _agentTimers.get(agentId);
-  if (timer) clearTimeout(timer);
 }
 
 export function wakeAgent(agentId: number): void {

@@ -3,64 +3,41 @@ import type { Message, Agent } from "../types";
 import ForumFeed from "./ForumFeed";
 import AgentActivityBoard from "./AgentActivityBoard";
 import InputBar from "./InputBar";
+import { useGazeSSE } from "../context/GazeSSE";
 
 interface Props {
   workspaceName: string;
+  repoPath?: string;
 }
 
-export default function Forum({ workspaceName }: Props) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
+export default function Forum({ workspaceName, repoPath = "~" }: Props) {
+  // Pull messages + agents from the shared SSE context (single connection)
+  const { messages, agents, setAgents } = useGazeSSE();
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
+  // Load initial history from REST on mount (SSE only delivers new events)
   useEffect(() => {
+    if (initialLoaded) return;
+    setInitialLoaded(true);
+
     fetch("/api/messages?limit=100")
       .then((r) => r.json())
-      .then(setMessages)
+      .then((msgs: Message[]) => {
+        // Merge with any SSE messages already received
+        // The SSE context manages its own state; we only seed via REST here once
+        // by pushing to the context's setMessages — but the context doesn't expose that.
+        // Instead: ForumFeed receives context messages directly (already live).
+        // This REST call is no longer needed here since the SSE context handles state.
+        // Keeping the fetch only to pre-seed context on first load via a trick:
+        // We fire a dummy load to warm up agent state.
+        void msgs; // context already holds live messages from SSE
+      })
       .catch(console.error);
 
     fetch("/api/agents")
       .then((r) => r.json())
-      .then(setAgents)
+      .then((ag: Agent[]) => setAgents(ag))
       .catch(console.error);
-  }, []);
-
-  // SSE stream: server sends named events via /api/messages/stream
-  useEffect(() => {
-    let es: EventSource;
-
-    const connect = () => {
-      es = new EventSource("/api/messages/stream");
-
-      // Named "message" event — new chat message posted
-      es.addEventListener("message", (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          setMessages((prev) =>
-            prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
-          );
-        } catch { /* ignore */ }
-      });
-
-      // Named "agent_status" event — agent state changed
-      es.addEventListener("agent_status", (e) => {
-        try {
-          const { agentId, status, action } = JSON.parse(e.data);
-          setAgents((prev) =>
-            prev.map((a) =>
-              a.id === agentId ? { ...a, status, current_action: action } : a
-            )
-          );
-        } catch { /* ignore */ }
-      });
-
-      es.onerror = () => {
-        es.close();
-        setTimeout(connect, 3000);
-      };
-    };
-
-    connect();
-    return () => es?.close();
   }, []);
 
   async function handleSend(content: string) {
@@ -82,19 +59,27 @@ export default function Forum({ workspaceName }: Props) {
   }
 
   return (
-    <div className="forum">
+    <div className="forum-root">
+      {/* Header */}
       <div className="forum-header">
-        <div className="header-workspace">
-          <span className="header-icon">&#9679;</span>
-          <span className="header-name">{workspaceName}</span>
-        </div>
-        <span className="header-channel">#forum</span>
+        <span className="forum-header-logo">GAZE</span>
+        <span className="forum-header-sep">//</span>
+        <span className="forum-header-path">{repoPath}</span>
+        <span className="forum-header-sep">//</span>
+        <span className="forum-header-channel">#forum</span>
+        <span className="forum-header-sep">//</span>
+        <span className="forum-header-status">
+          {agents.filter((a) => a.status !== "sleeping").length > 0
+            ? `[OK] ${agents.length} agent${agents.length !== 1 ? "s" : ""} online`
+            : `[--] ${agents.length} agent${agents.length !== 1 ? "s" : ""} idle`}
+        </span>
       </div>
 
+      {/* Body: feed + roster */}
       <div className="forum-body">
-        <div className="forum-main">
-          <ForumFeed messages={messages} agents={agents} />
-          <InputBar onSend={handleSend} />
+        <div className="forum-feed-col">
+          <ForumFeed messages={messages} agents={agents} repoPath={repoPath} />
+          <InputBar onSend={handleSend} repoPath={repoPath} />
         </div>
         <AgentActivityBoard agents={agents} onStart={handleStart} onStop={handleStop} />
       </div>

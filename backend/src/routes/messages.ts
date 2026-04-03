@@ -6,7 +6,8 @@ import {
   getReactionsForMessages,
   type Message,
 } from "../database.js";
-import { wakeAll } from "../agentLoop.js";
+import { wakeAgent } from "../agentLoop.js";
+import { getAllAgents } from "../database.js";
 
 export async function messageRoutes(app: FastifyInstance): Promise<void> {
   // GET /api/messages
@@ -46,8 +47,14 @@ export async function messageRoutes(app: FastifyInstance): Promise<void> {
       send("message", { ...msg, reactions: [] });
     });
 
-    // Wake agents
-    wakeAll();
+    // Wake only @mentioned agents — mention-only mode
+    const agents = getAllAgents();
+    const mentionedNames = (content.match(/@(\w+)/g) ?? []).map((m) => m.slice(1).toLowerCase());
+    for (const agent of agents) {
+      if (mentionedNames.includes(agent.name.toLowerCase())) {
+        wakeAgent(agent.id);
+      }
+    }
 
     return { ...msg, reactions: [] };
   });

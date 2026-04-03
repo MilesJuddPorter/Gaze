@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ConfigWizard from "./components/ConfigWizard";
 import Forum from "./components/Forum";
+import { GazeSSEProvider } from "./context/GazeSSE";
 
 type AppState = "loading" | "config" | "forum";
 
@@ -50,7 +51,11 @@ export default function App() {
     );
   }
 
-  return <Forum workspaceName={workspaceName} />;
+  return (
+    <GazeSSEProvider>
+      <Forum workspaceName={workspaceName} repoPath={repoPath} />
+    </GazeSSEProvider>
+  );
 }
 
 const S: Record<string, React.CSSProperties> = {
