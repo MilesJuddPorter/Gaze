@@ -14,7 +14,7 @@ interface Props {
 export default function Forum({ workspaceName, repoPath = "~" }: Props) {
   const { messages, agents, setAgents } = useGazeSSE();
   const [initialLoaded, setInitialLoaded] = useState(false);
-  const [agentsRunning, setAgentsRunning] = useState(false);
+  // Agents auto-run while server is up — no manual start/stop needed
   const [dmPanelOpen, setDmPanelOpen] = useState(false);
 
   useEffect(() => {
@@ -23,15 +23,7 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
 
     fetch("/api/agents")
       .then((r) => r.json())
-      .then((ag: Agent[]) => {
-        setAgents(ag);
-        setAgentsRunning(ag.some((a) => a.running));
-      })
-      .catch(console.error);
-
-    fetch("/api/agents/status/running")
-      .then((r) => r.json())
-      .then((d) => setAgentsRunning(d.running ?? false))
+      .then((ag: Agent[]) => { setAgents(ag); })
       .catch(console.error);
   }, []);
 
@@ -41,18 +33,6 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     });
-  }
-
-  async function handleStart() {
-    await fetch("/api/agents/start", { method: "POST" }).catch(console.error);
-    setAgentsRunning(true);
-    fetch("/api/agents").then((r) => r.json()).then(setAgents).catch(console.error);
-  }
-
-  async function handleStop() {
-    await fetch("/api/agents/stop", { method: "POST" }).catch(console.error);
-    setAgentsRunning(false);
-    fetch("/api/agents").then((r) => r.json()).then(setAgents).catch(console.error);
   }
 
   async function handleToggleOoo(agentId: number, isOoo: boolean) {
@@ -109,9 +89,6 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
 
         <AgentRoster
           agents={agents}
-          agentsRunning={agentsRunning}
-          onStart={handleStart}
-          onStop={handleStop}
           onToggleOoo={handleToggleOoo}
         />
       </div>

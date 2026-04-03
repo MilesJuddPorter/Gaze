@@ -76,7 +76,7 @@ export default function AgentDeepDive({ agent, onClose }: Props) {
                   <span style={S.logTool}>{entry.tool_name.padEnd(18)}</span>
                   <span style={S.logDesc}>{entry.description.slice(0, 28).padEnd(28)}</span>
                   <span style={{ ...S.logStatus, color: statusColor }}>
-                    {entry.status === "error" ? "[ERR]" : "[OK]"}
+                    {entry.status === "error" ? "✗" : "✓"}
                   </span>
                 </div>
               );

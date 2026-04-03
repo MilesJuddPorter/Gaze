@@ -119,13 +119,13 @@ export default function InputBar({ onSend, agents = [] }: Props) {
                 border: "1px solid var(--border)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 11, fontWeight: 600,
-                color: "var(--text-primary)",
+                color: "var(--text-primary, var(--text))",
                 flexShrink: 0,
               }}>
                 {m.name === "everyone" ? "@" : m.name[0]?.toUpperCase()}
               </span>
               <div>
-                <div style={{ color: "var(--text-primary)", fontWeight: 500 }}>@{m.name}</div>
+                <div style={{ color: "var(--text-primary, var(--text))", fontWeight: 500 }}>@{m.name}</div>
                 <div style={{ color: "var(--text-secondary)", fontSize: 11 }}>{m.role}</div>
               </div>
             </div>

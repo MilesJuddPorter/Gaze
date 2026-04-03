@@ -36,7 +36,7 @@ export default function ToolBubble({ event }: Props) {
   if (!visible || !event) return null;
 
   const inputLines = event.tool_input ? formatInput(event.tool_input) : [];
-  const statusStr = event.status === "error" ? "[ERR]" : event.result_summary ? "[OK]" : "";
+  const statusStr = event.status === "error" ? "✗" : event.result_summary ? "✓" : "";
   const statusColor = event.status === "error" ? "var(--error)" : "var(--amber)";
 
   return (
