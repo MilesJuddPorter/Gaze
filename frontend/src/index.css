@@ -581,3 +581,44 @@ html, body, #root {
   border-radius: var(--radius-full);
   margin-left: auto;
 }
+
+/* ── Field group (setup form) ───────────────────────────────────────────── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+.field-prompt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+  padding-bottom: 2px;
+  display: block;
+}
+.field-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  caret-color: var(--amber);
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.08);
+}
+.field-input::placeholder { color: var(--text-muted); }
+.field-input.error { border-color: var(--error); }

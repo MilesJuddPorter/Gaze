@@ -4,9 +4,9 @@ import type { Agent } from "../types";
 
 interface Props {
   agents: Agent[];
-  agentsRunning: boolean;
-  onStart: () => void;
-  onStop: () => void;
+  agentsRunning?: boolean;
+  onStart?: () => void;
+  onStop?: () => void;
   onToggleOoo: (agentId: number, isOoo: boolean) => void;
 }
 
@@ -32,7 +32,7 @@ function getDotClass(agent: Agent): string {
   return "idle";
 }
 
-export default function AgentRoster({ agents, agentsRunning, onStart, onStop, onToggleOoo }: Props) {
+export default function AgentRoster({ agents, onToggleOoo }: Props) {
   const [animating, setAnimating] = useState<Set<number>>(new Set());
 
   const handleToggleOoo = (agent: Agent) => {
@@ -107,17 +107,7 @@ export default function AgentRoster({ agents, agentsRunning, onStart, onStop, on
         })}
       </div>
 
-      <div className="roster-controls">
-        {agentsRunning ? (
-          <button className="btn btn-secondary btn-sm" onClick={onStop} style={{ flex: 1 }}>
-            Stop agents
-          </button>
-        ) : (
-          <button className="btn btn-primary btn-sm" onClick={onStart} style={{ flex: 1 }}>
-            Start agents
-          </button>
-        )}
-      </div>
+      {/* Start/stop removed — agents always run while server is up */}
     </div>
   );
 }

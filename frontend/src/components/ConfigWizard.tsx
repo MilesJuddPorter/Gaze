@@ -216,21 +216,21 @@ export default function ConfigWizard({ onComplete }: Props) {
       if (runningCount === 0) {
         setInitLog((prev) => [
           ...prev,
-          "[ERR] no agents started — check ANTHROPIC_API_KEY",
-          "> export ANTHROPIC_API_KEY=sk-... and relaunch",
+          "✗ No agents started — check your ANTHROPIC_API_KEY",
+          "Set ANTHROPIC_API_KEY in your shell and relaunch",
         ]);
         setSubmitting(false);
         return;
       }
 
-      setInitLog((prev) => [...prev, `[OK] ${runningCount} agent${runningCount > 1 ? "s" : ""} online`]);
+      setInitLog((prev) => [...prev, `✓ ${runningCount} agent${runningCount > 1 ? "s" : ""} online`]);
       await new Promise((r) => setTimeout(r, 300));
-      setInitLog((prev) => [...prev, "[OK] workspace ready"]);
+      setInitLog((prev) => [...prev, "✓ workspace ready"]);
       await new Promise((r) => setTimeout(r, 600));
       onComplete();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "unknown error";
-      setInitLog((prev) => [...prev, `[ERR] init failed: ${msg}`]);
+      setInitLog((prev) => [...prev, `✗ init failed: ${msg}`]);
       setSubmitting(false);
     }
   };
@@ -241,15 +241,15 @@ export default function ConfigWizard({ onComplete }: Props) {
       <div style={S.screen}>
         <div style={S.initBox}>
           <div style={S.initTitle}>Setting up Gaze</div>
-          <div style={S.initDivider}>{'═'.repeat(40)}</div>
+          <div style={S.initDivider}>{""}</div>
           {initLog.map((line, i) => (
             <div
               key={i}
               style={{
                 ...S.initLine,
-                color: line.startsWith("[OK]")
+                color: line.startsWith("✓")
                   ? "var(--amber)"
-                  : line.startsWith("[ERR]")
+                  : line.startsWith("✗")
                   ? "var(--error)"
                   : "var(--text-muted)",
               }}
@@ -257,8 +257,8 @@ export default function ConfigWizard({ onComplete }: Props) {
               {">"} {line}
             </div>
           ))}
-          {initLog[initLog.length - 1] !== "[OK] workspace ready" &&
-            !initLog[initLog.length - 1]?.startsWith("[ERR]") && (
+          {initLog[initLog.length - 1] !== "✓ workspace ready" &&
+            !initLog[initLog.length - 1]?.startsWith("✗") && (
               <span className="cursor" style={{ marginLeft: 8 }} />
             )}
         </div>

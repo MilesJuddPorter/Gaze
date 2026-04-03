@@ -104,7 +104,7 @@ export default function Forum({ workspaceName, repoPath = "~" }: Props) {
       <div className="forum-body">
         <div className="forum-feed-col">
           <ForumFeed messages={messages} agents={agents} />
-          <InputBar onSend={handleSend} />
+          <InputBar onSend={handleSend} agents={agents} />
         </div>
 
         <AgentRoster
